@@ -1,0 +1,165 @@
+package com.avip.installcheck
+
+import android.annotation.SuppressLint
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.DashPathEffect
+import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.RectF
+import android.view.MotionEvent
+import android.view.View
+import java.io.File
+
+/**
+ * Finger drawing area. Used for the customer's signature and for the site sketch
+ * (with N / E / S / W marks, like the paper form). The sketch can draw free hand,
+ * straight lines or rectangles.
+ */
+@SuppressLint("ViewConstructor")
+class DrawPad(context: Context, private val compass: Boolean) : View(context) {
+
+    enum class Tool { FREE, LINE, RECT }
+
+    private class Mark(val tool: Tool, val path: Path, var x0: Float, var y0: Float, var x1: Float, var y1: Float)
+
+    var tool = Tool.FREE
+
+    private val ink = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = if (compass) Ui.BLUE else 0xFF0B2A6B.toInt()
+        style = Paint.Style.STROKE
+        strokeWidth = context.dpf(if (compass) 3f else 2.6f)
+        strokeCap = Paint.Cap.ROUND
+        strokeJoin = Paint.Join.ROUND
+    }
+    private val guide = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFB9C4BD.toInt(); textSize = context.dpf(15f); isFakeBoldText = true; textAlign = Paint.Align.CENTER
+    }
+    private val dash = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFDCE3DE.toInt(); strokeWidth = context.dpf(1f); style = Paint.Style.STROKE
+    }
+    // graph-paper background for the site sketch: small dotted squares, a darker line every 5
+    private val gridMinor = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFD5DFD9.toInt(); strokeWidth = context.dpf(1f); style = Paint.Style.STROKE
+        pathEffect = DashPathEffect(floatArrayOf(context.dpf(1.5f), context.dpf(3f)), 0f)
+    }
+    private val gridMajor = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFB7C6BD.toInt(); strokeWidth = context.dpf(1.2f); style = Paint.Style.STROKE
+        pathEffect = DashPathEffect(floatArrayOf(context.dpf(4f), context.dpf(3f)), 0f)
+    }
+    private val cell get() = context.dpf(20f)
+    private val marks = mutableListOf<Mark>()
+    private var current: Mark? = null
+    private var base: Bitmap? = null
+    var onDrawn: (() -> Unit)? = null
+
+    val isEmpty get() = marks.isEmpty() && base == null
+
+    fun clear() { marks.clear(); base = null; invalidate(); onDrawn?.invoke() }
+
+    fun undo() { if (marks.isNotEmpty()) { marks.removeAt(marks.size - 1); invalidate(); onDrawn?.invoke() } }
+
+    /** Shows an earlier saved drawing so it can be added to. */
+    fun loadFrom(file: File) {
+        if (file.exists()) base = BitmapFactory.decodeFile(file.absolutePath)
+        invalidate()
+    }
+
+    private fun drawMark(c: Canvas, m: Mark) {
+        when (m.tool) {
+            Tool.FREE -> c.drawPath(m.path, ink)
+            Tool.LINE -> c.drawLine(m.x0, m.y0, m.x1, m.y1, ink)
+            Tool.RECT -> c.drawRect(minOf(m.x0, m.x1), minOf(m.y0, m.y1), maxOf(m.x0, m.x1), maxOf(m.y0, m.y1), ink)
+        }
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        canvas.drawColor(Color.WHITE)
+        base?.let { canvas.drawBitmap(it, null, RectF(0f, 0f, width.toFloat(), height.toFloat()), null) }
+        if (base == null) drawGuides(canvas, guide, dash)
+        marks.forEach { drawMark(canvas, it) }
+    }
+
+    private fun drawGrid(c: Canvas) {
+        val w = width.toFloat(); val h = height.toFloat()
+        val step = cell
+        // start the grid from the centre so it looks even on every screen
+        val cx = w / 2; val cy = h / 2
+        var i = 0
+        var x = cx
+        while (x >= 0) { c.drawLine(x, 0f, x, h, if (i % 5 == 0) gridMajor else gridMinor); x -= step; i++ }
+        i = 1; x = cx + step
+        while (x <= w) { c.drawLine(x, 0f, x, h, if (i % 5 == 0) gridMajor else gridMinor); x += step; i++ }
+        i = 0
+        var y = cy
+        while (y >= 0) { c.drawLine(0f, y, w, y, if (i % 5 == 0) gridMajor else gridMinor); y -= step; i++ }
+        i = 1; y = cy + step
+        while (y <= h) { c.drawLine(0f, y, w, y, if (i % 5 == 0) gridMajor else gridMinor); y += step; i++ }
+    }
+
+    private fun drawGuides(c: Canvas, text: Paint, line: Paint) {
+        val w = width.toFloat(); val h = height.toFloat()
+        if (compass) {
+            drawGrid(c)
+            // white patches so N / E / S / W stay readable over the grid
+            val bg = Paint().apply { color = Color.WHITE }
+            val pad = context.dpf(16f)
+            val r = text.textSize * 0.75f
+            c.drawCircle(w / 2, pad, r, bg); c.drawCircle(w / 2, h - pad / 2 - text.textSize * 0.35f, r, bg)
+            c.drawCircle(pad, h / 2, r, bg); c.drawCircle(w - pad, h / 2, r, bg)
+            c.drawText("N", w / 2, pad + text.textSize * 0.4f, text)
+            c.drawText("S", w / 2, h - pad / 2, text)
+            c.drawText("W", pad, h / 2 + text.textSize / 3, text)
+            c.drawText("E", w - pad, h / 2 + text.textSize / 3, text)
+        } else {
+            val y = h * 0.75f
+            c.drawLine(context.dpf(20f), y, w - context.dpf(20f), y, line)
+            text.textSize = context.dpf(12f)
+            c.drawText("Sign above the line", w / 2, y + context.dpf(20f), text)
+            text.textSize = context.dpf(15f)
+        }
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    override fun onTouchEvent(e: MotionEvent): Boolean {
+        parent?.requestDisallowInterceptTouchEvent(true) // don't scroll the page while drawing
+        when (e.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                val m = Mark(tool, Path().apply { moveTo(e.x, e.y); lineTo(e.x + 0.1f, e.y) }, e.x, e.y, e.x, e.y)
+                current = m
+                marks += m
+            }
+            MotionEvent.ACTION_MOVE -> current?.let { m ->
+                if (m.tool == Tool.FREE) {
+                    for (i in 0 until e.historySize) m.path.lineTo(e.getHistoricalX(i), e.getHistoricalY(i))
+                    m.path.lineTo(e.x, e.y)
+                }
+                m.x1 = e.x; m.y1 = e.y
+            }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                current = null
+                parent?.requestDisallowInterceptTouchEvent(false)
+                onDrawn?.invoke()
+            }
+        }
+        invalidate()
+        return true
+    }
+
+    /** Saves the drawing as PNG (white background, with the compass marks). */
+    fun save(file: File): Boolean {
+        if (isEmpty || width == 0) return false
+        val bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val c = Canvas(bmp)
+        c.drawColor(Color.WHITE)
+        base?.let { c.drawBitmap(it, null, RectF(0f, 0f, width.toFloat(), height.toFloat()), null) }
+        if (base == null && compass) drawGuides(c, Paint(guide).apply { color = 0xFF66746B.toInt() }, dash)
+        marks.forEach { drawMark(c, it) }
+        file.parentFile?.mkdirs()
+        file.outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        return true
+    }
+}

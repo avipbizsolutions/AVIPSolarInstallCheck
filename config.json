@@ -1,0 +1,4 @@
+{
+  "endpoint": "",
+  "note": "Put the Apps Script web app /exec URL in endpoint. Phones read this file on every launch, so no app update is needed when it changes."
+}
