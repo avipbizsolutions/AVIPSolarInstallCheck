@@ -2,6 +2,11 @@ name: Build APK
 
 on:
   push:
+    # Changing the server address, the sheet script or the README needs no new app version.
+    paths-ignore:
+      - "config.json"
+      - "apps-script/**"
+      - "README.md"
   workflow_dispatch:
 
 permissions:
