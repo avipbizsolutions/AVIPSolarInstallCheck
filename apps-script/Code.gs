@@ -96,6 +96,18 @@ function setup() {
   secret();
   photoRoot();
   Logger.log('Ready. Now deploy as a web app (Execute as: Me, Who has access: Anyone).');
+  Logger.log('Link key for the AVIP Site Visits Log script (INSTALL_CHECK_KEY): ' + linkKey());
+}
+
+/** Separate key for the AVIP Solar Sales link, kept only in the two Google scripts. */
+function linkKey() {
+  const p = PropertiesService.getScriptProperties();
+  let k = p.getProperty('LINK_KEY');
+  if (!k) {
+    k = Utilities.getUuid();
+    p.setProperty('LINK_KEY', k);
+  }
+  return k;
 }
 
 // ------------------------------------------------------------------ sheet helpers
@@ -775,12 +787,19 @@ function qc(d) {
  * later calls only update the installation date while the site is still a Draft.
  */
 function salesVisit(d) {
+  if (clean(d.linkKey) !== linkKey()) throw new Error('Not allowed');
   const visitNo = clean(d.visitNo);
   if (!visitNo) throw new Error('Visit number missing.');
   const existing = rows('Sites').filter(function (r) { return clean(r['Sales Visit No.']) === visitNo; })[0];
   if (existing) {
+    const upd = {};
     if ([S.DRAFT, S.SENT_BACK].indexOf(clean(existing['Status'])) >= 0 && clean(d.installDate)) {
-      setFields('Sites', existing._row, { 'Installation Date': toDate(d.installDate), 'Last Updated': now() });
+      upd['Installation Date'] = toDate(d.installDate);
+    }
+    if (clean(d.reportPdf) && !clean(existing['Site Report PDF'])) upd['Site Report PDF'] = clean(d.reportPdf, 300);
+    if (Object.keys(upd).length) {
+      upd['Last Updated'] = now();
+      setFields('Sites', existing._row, upd);
     }
     return { siteId: clean(existing['Site ID']), existing: true };
   }

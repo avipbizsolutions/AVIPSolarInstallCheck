@@ -43,7 +43,8 @@ After changing `Code.gs`: Deploy → Manage deployments → Edit → Version: **
 
 ### Link from AVIP Solar Sales
 When a visit is marked **Converted** with an installation date, the AVIP Site Visits Log script
-sends it to this app's web app (`kind: "salesVisit"`). It arrives as a Draft for that sales
+sends it to this app's web app (`kind: "salesVisit"`, protected by the link key that **setup**
+prints in the Apps Script log; put it in that script's `INSTALL_CHECK_KEY`). It arrives as a Draft for that sales
 executive, with BOM Master defaults as the material list. The same visit is never copied twice.
 The sales executive's name in AVIP Solar Sales must match their name in the Users tab.
 
