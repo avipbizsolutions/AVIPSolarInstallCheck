@@ -803,19 +803,22 @@ function salesVisit(d) {
     }
     return { siteId: clean(existing['Site ID']), existing: true };
   }
+  // the sales executive is found by mobile number, so names need not match between the two apps
+  const exec = d.salesMobile ? findUserByMobile(d.salesMobile) : null;
+  const salesPerson = exec ? clean(exec['Name']) : clean(d.salesPerson, 80);
   const id = newSiteId();
   const loc = clean(d.location).split(',');
   const lat = loc.length === 2 ? num(loc[0]) : '';
   const lng = loc.length === 2 ? num(loc[1]) : '';
   append('Sites', {
-    'Site ID': id, 'Created On': now(), 'Sales Person': clean(d.salesPerson, 80),
+    'Site ID': id, 'Created On': now(), 'Sales Person': salesPerson,
     'Customer Name': clean(d.customer, 120), 'Mobile': d.mobile ? "'" + last10(d.mobile) : '',
     'WhatsApp': d.mobile ? "'" + last10(d.mobile) : '', 'Address': clean(d.address, 300), 'District': clean(d.district, 60),
     'Latitude': lat, 'Longitude': lng,
     'Google Map Link': lat && lng ? 'https://maps.google.com/?q=' + lat + ',' + lng : '',
     'Site Size (kW)': d.kwp ? num(d.kwp) : '', 'System Type': clean(d.systemType, 30),
     'DISCOM': clean(d.discom, 20), 'CA No.': d.caNo ? "'" + clean(d.caNo, 30) : '',
-    'Survey By': clean(d.salesPerson, 80), 'Survey Date': toDate(d.visitDate),
+    'Survey By': salesPerson, 'Survey Date': toDate(d.visitDate),
     'Status': S.DRAFT, 'Installation Date': toDate(d.installDate), 'Last Updated': now(),
     'Source': 'AVIP Solar Sales', 'Sales Visit No.': "'" + visitNo, 'Quoted System': clean(d.system, 200),
     'Site Report PDF': clean(d.reportPdf, 300),
