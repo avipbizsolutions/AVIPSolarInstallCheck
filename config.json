@@ -1,4 +1,4 @@
 {
-  "endpoint": "",
-  "note": "Put the Apps Script web app /exec URL in endpoint. Phones read this file on every launch, so no app update is needed when it changes."
+  "endpoint": "https://script.google.com/macros/s/AKfycbw84fJIZBwwph2HdC-9iCASH2mvtdXu8cpXR4tXjhNCarsMIuR1lAwg4hI0-2-nR2r-/exec",
+  "note": "Apps Script web app /exec URL of the AVIP Solar Install Check – Database sheet. Phones read this file on every launch, so no app update is needed when it changes."
 }
