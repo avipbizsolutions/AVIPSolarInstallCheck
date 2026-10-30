@@ -440,12 +440,18 @@ class InstallActivity : AppCompatActivity() {
                 Api.call(this, "submitInstall", JSONObject().put("siteId", site.id).put("demo", draft.demo)
                     .put("tlSignature", b64(draft.tlSign)).put("customerSignature", b64(draft.customerSign)), timeoutMs = 120000)
                 Sites.reload(this)
-            }) {
+                // the Installation Report goes to the office (and so to the customer's AVIP Solar app) every time
+                val fresh = Sites.byId(site.id) ?: site
+                try { ReportPdf.saveToOffice(this, fresh) } catch (e: ApiException) { if (e.sessionExpired) throw e; null } catch (_: Exception) { null }
+            }) { report ->
                 site = Sites.byId(site.id) ?: site
                 AlertDialog.Builder(this).setTitle("Submit हो गया ✓")
-                    .setMessage("Report Office को भेज दी गई। Manager QC करेंगे।\n\nअब ग्राहक को Installation Report WhatsApp पर भेजें?")
+                    .setMessage("Report Office को भेज दी गई और ग्राहक की AVIP Solar App में भी दिखेगी। Manager QC करेंगे।\n\nअब ग्राहक को Installation Report WhatsApp पर भी भेजें?")
                     .setCancelable(false)
-                    .setPositiveButton("WhatsApp पर भेजें") { _, _ -> ReportPdf.shareFor(this, site) { finish() } }
+                    .setPositiveButton("WhatsApp पर भेजें") { _, _ ->
+                        if (report != null) { ReportPdf.sendOnWhatsApp(this, site, report); finish() }
+                        else ReportPdf.shareFor(this, site) { finish() }
+                    }
                     .setNegativeButton("बाद में") { _, _ -> finish() }
                     .show()
             }

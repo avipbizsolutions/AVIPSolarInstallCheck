@@ -235,31 +235,40 @@ object ReportPdf {
         return out
     }
 
+    /**
+     * Builds the report and saves it to the office Drive (blocking). The Customer app
+     * shows it from there, so this runs on every submit, shared on WhatsApp or not.
+     */
+    fun saveToOffice(c: Context, site: Site): File {
+        val f = build(c, site)
+        try {
+            Api.call(c, "report", JSONObject().put("siteId", site.id)
+                .put("data", android.util.Base64.encodeToString(f.readBytes(), android.util.Base64.NO_WRAP)), timeoutMs = 120000)
+        } catch (e: ApiException) {
+            if (e.sessionExpired) throw e
+        }
+        return f
+    }
+
     /** Builds the report, saves a copy to the office Drive and opens WhatsApp to the customer. */
     fun shareFor(a: AppCompatActivity, site: Site, after: (() -> Unit)? = null) {
-        a.busy("Report बन रही है…", {
-            val f = build(a, site)
-            try {
-                Api.call(a, "report", JSONObject().put("siteId", site.id)
-                    .put("data", android.util.Base64.encodeToString(f.readBytes(), android.util.Base64.NO_WRAP)), timeoutMs = 120000)
-            } catch (e: ApiException) {
-                if (e.sessionExpired) throw e
-            }
-            f
-        }) { f ->
-            val uri = FileProvider.getUriForFile(a, a.packageName + ".files", f)
-            val number = site.s("WhatsApp").ifBlank { site.mobile }.filter { it.isDigit() }.takeLast(10)
-            val base = Intent(Intent.ACTION_SEND).setType("application/pdf")
-                .putExtra(Intent.EXTRA_STREAM, uri)
-                .putExtra(Intent.EXTRA_TEXT, "नमस्ते ${site.customer} जी, AVIP Solar की ओर से आपके Solar installation की report संलग्न है। धन्यवाद! — AVIP Solar, 92881 76289")
-                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            if (number.length == 10) base.putExtra("jid", "91$number@s.whatsapp.net")
-            val opened = listOf("com.whatsapp", "com.whatsapp.w4b").any { pkg ->
-                try { a.startActivity(Intent(base).setPackage(pkg)); true } catch (_: Exception) { false }
-            }
-            if (!opened) a.startActivity(Intent.createChooser(base, "Report भेजें"))
-            Thread { try { Api.call(a, "sentToCustomer", JSONObject().put("siteId", site.id)) } catch (_: Exception) {} }.start()
-            after?.invoke()
+        a.busy("Report बन रही है…", { saveToOffice(a, site) }) { f -> sendOnWhatsApp(a, site, f); after?.invoke() }
+    }
+
+    /** Opens WhatsApp to the customer with an already built report. */
+    fun sendOnWhatsApp(a: AppCompatActivity, site: Site, f: File) {
+        val uri = FileProvider.getUriForFile(a, a.packageName + ".files", f)
+        val number = site.s("WhatsApp").ifBlank { site.mobile }.filter { it.isDigit() }.takeLast(10)
+        val base = Intent(Intent.ACTION_SEND).setType("application/pdf")
+            .putExtra(Intent.EXTRA_STREAM, uri)
+            .putExtra(Intent.EXTRA_TEXT, "नमस्ते ${site.customer} जी, AVIP Solar की ओर से आपके Solar installation की report संलग्न है। " +
+                "यह report AVIP Solar App में भी है। धन्यवाद! — AVIP Solar, 92881 76289")
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        if (number.length == 10) base.putExtra("jid", "91$number@s.whatsapp.net")
+        val opened = listOf("com.whatsapp", "com.whatsapp.w4b").any { pkg ->
+            try { a.startActivity(Intent(base).setPackage(pkg)); true } catch (_: Exception) { false }
         }
+        if (!opened) a.startActivity(Intent.createChooser(base, "Report भेजें"))
+        Thread { try { Api.call(a, "sentToCustomer", JSONObject().put("siteId", site.id)) } catch (_: Exception) {} }.start()
     }
 }
