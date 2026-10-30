@@ -37,8 +37,10 @@ jobs:
         run: |
           set -o pipefail
           gradle assembleRelease --console=plain 2>&1 | tee build.log
-          cp app/build/outputs/apk/release/app-release.apk "AVIP-Solar-Install-Check-${VERSION_NAME}.apk"
-          # Fixed name, so .../releases/latest/download/AVIP-Solar-Install-Check.apk always gets the newest
+          cp app/build/outputs/apk/release/app-release.apk "AVIP-Solar-Installation-${VERSION_NAME}.apk"
+          # Fixed name, so .../releases/latest/download/AVIP-Solar-Installation.apk always gets the newest
+          cp app/build/outputs/apk/release/app-release.apk AVIP-Solar-Installation.apk
+          # Old name, so the link already shared with the team keeps working
           cp app/build/outputs/apk/release/app-release.apk AVIP-Solar-Install-Check.apk
 
       - name: Report build errors
@@ -50,8 +52,8 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: AVIP-Solar-Install-Check-${{ env.VERSION_NAME }}-apk
-          path: AVIP-Solar-Install-Check-${{ env.VERSION_NAME }}.apk
+          name: AVIP-Solar-Installation-${{ env.VERSION_NAME }}-apk
+          path: AVIP-Solar-Installation-${{ env.VERSION_NAME }}.apk
 
       # Phones check this release on launch and update themselves (compulsory).
       - name: Publish release
@@ -59,9 +61,10 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ env.VERSION_NAME }}
-          name: AVIP Solar Install Check ${{ env.VERSION_NAME }}
+          name: AVIP Solar Installation ${{ env.VERSION_NAME }}
           body: Automatic build from commit ${{ github.sha }}.
           files: |
-            AVIP-Solar-Install-Check-${{ env.VERSION_NAME }}.apk
+            AVIP-Solar-Installation-${{ env.VERSION_NAME }}.apk
+            AVIP-Solar-Installation.apk
             AVIP-Solar-Install-Check.apk
           make_latest: true

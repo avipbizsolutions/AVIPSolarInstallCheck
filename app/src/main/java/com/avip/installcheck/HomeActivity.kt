@@ -76,7 +76,7 @@ class HomeActivity : AppCompatActivity() {
                 addView(badge(R.drawable.ic_sun, Ui.SUN, 40, square = true))
                 addView(vertical {
                     addView(text("AVIP Solar", 12.5f, 0xFFC9D6E2.toInt()))
-                    addView(text("Install Check", 18f, Color.WHITE, bold = true))
+                    addView(text("Installation", 18f, Color.WHITE, bold = true))
                 }, lp(0, WRAP, 1f).margins(context, l = 10))
                 addView(pill(Team.label(user.team), Team.color(user.team), Color.WHITE))
                 addView(barButton(R.drawable.ic_refresh) { load() })

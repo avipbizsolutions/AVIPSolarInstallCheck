@@ -52,7 +52,7 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun showLogin() {
-        val f = frame("Solar Install Check", "AVIP Solar")
+        val f = frame("Solar Installation", "AVIP Solar")
         f.addView(text("Login करें", 20f, Ui.TEXT, bold = true))
         val mobile = field(f, "Mobile Number", "", "10 अंकों का number", InputType.TYPE_CLASS_PHONE, R.drawable.ic_call, 13) {}
         val pin = field(f, "4 अंकों का PIN", "", "••••", InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD, R.drawable.ic_sign, 4) {}

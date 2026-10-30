@@ -42,7 +42,7 @@ object Updater {
     fun fetchLatest(): ReleaseInfo? = try {
         val conn = URL(LATEST_RELEASE).openConnection() as HttpURLConnection
         conn.setRequestProperty("Accept", "application/vnd.github+json")
-        conn.setRequestProperty("User-Agent", "AVIP-Install-Check")
+        conn.setRequestProperty("User-Agent", "AVIP-Solar-Installation")
         conn.connectTimeout = 4000
         conn.readTimeout = 4000
         try {
@@ -86,7 +86,7 @@ object Updater {
             while (true) {
                 conn = url.openConnection() as HttpURLConnection
                 conn.instanceFollowRedirects = false
-                conn.setRequestProperty("User-Agent", "AVIP-Install-Check")
+                conn.setRequestProperty("User-Agent", "AVIP-Solar-Installation")
                 conn.connectTimeout = 10000
                 conn.readTimeout = 20000
                 val code = conn.responseCode

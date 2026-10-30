@@ -80,7 +80,7 @@ class CameraActivity : AppCompatActivity() {
         const val EXTRA_LAT = "lat"
         const val EXTRA_LNG = "lng"
         private const val PREFS = "camera"
-        private const val GALLERY_FOLDER = "AVIP Install Check"
+        private const val GALLERY_FOLDER = "AVIP Solar Installation"
     }
 
     private data class Snapshot(val loc: Location?, val place: PlaceInfo, val time: Date, val heading: Float?)
@@ -485,7 +485,7 @@ class CameraActivity : AppCompatActivity() {
         }
     }
 
-    /** A copy in the phone gallery (Pictures/AVIP Install Check), like AVIP GPSCam. */
+    /** A copy in the phone gallery (Pictures/AVIP Solar Installation), like AVIP GPSCam. */
     private fun copyToGallery(f: File, snap: Snapshot) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
         try {

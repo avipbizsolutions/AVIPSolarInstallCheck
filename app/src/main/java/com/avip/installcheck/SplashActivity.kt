@@ -71,7 +71,7 @@ class SplashActivity : AppCompatActivity() {
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             val r = pendingRelease
             if (r != null && Updater.canInstall(this)) lifecycleScope.launch { downloadAndInstall(r) }
-            else if (r != null) blockForUpdate("AVIP Solar Install Check को updates install करने की अनुमति दें, फिर Update now दबाएँ।")
+            else if (r != null) blockForUpdate("AVIP Solar Installation को updates install करने की अनुमति दें, फिर Update now दबाएँ।")
             else goNext()
         }
 
@@ -95,7 +95,7 @@ class SplashActivity : AppCompatActivity() {
         root.addView(View(this), lp(MATCH, 0, 1f))
         val brand = vertical {
             gravity = Gravity.CENTER_HORIZONTAL
-            addView(text("Solar Install Check", 28f, Color.WHITE, bold = true) { gravity = Gravity.CENTER }, lp(WRAP, WRAP))
+            addView(text("AVIP Solar Installation", 26f, Color.WHITE, bold = true) { gravity = Gravity.CENTER }, lp(WRAP, WRAP))
             addView(text("Site से Installation तक, हर काम का हिसाब", 14f, 0xDDFFFFFF.toInt()) { gravity = Gravity.CENTER }, lp(WRAP, WRAP).margins(context, t = 6))
             addView(text("by AVIP Business Solutions LLP", 12f, Ui.SUN, bold = true) { gravity = Gravity.CENTER }, lp(WRAP, WRAP).margins(context, t = 4))
         }
@@ -189,7 +189,7 @@ class SplashActivity : AppCompatActivity() {
     private fun askInstallPermission(release: ReleaseInfo) {
         AlertDialog.Builder(this)
             .setTitle("नया Version ज़रूरी है")
-            .setMessage("Version ${release.versionName} के बिना App नहीं खुलेगा। AVIP Solar Install Check को अपने updates install करने की अनुमति दें? यह सिर्फ एक बार पूछा जाएगा।")
+            .setMessage("Version ${release.versionName} के बिना App नहीं खुलेगा। AVIP Solar Installation को अपने updates install करने की अनुमति दें? यह सिर्फ एक बार पूछा जाएगा।")
             .setCancelable(false)
             .setPositiveButton("Allow") { _, _ ->
                 unknownSourcesLauncher.launch(
@@ -221,7 +221,7 @@ class SplashActivity : AppCompatActivity() {
                 setPadding(dp(10), dp(12), dp(10), dp(6))
                 setOnClickListener {
                     try {
-                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/avipbizsolutions/AVIPSolarInstallCheck/releases/latest/download/AVIP-Solar-Install-Check.apk")))
+                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/avipbizsolutions/AVIPSolarInstallCheck/releases/latest/download/AVIP-Solar-Installation.apk")))
                     } catch (_: Exception) {}
                 }
             })

@@ -1,10 +1,12 @@
-# AVIP Solar Install Check
+# AVIP Solar Installation
+
+(Formerly AVIP Solar Install Check. The repository name and app ID are unchanged, so updates keep working.)
 
 Android app for AVIP Solar (AVIP Business Solutions LLP): one app for four teams, from the
 sales visit to the quality-checked installation.
 
 **Download the latest APK:**
-https://github.com/avipbizsolutions/AVIPSolarInstallCheck/releases/latest/download/AVIP-Solar-Install-Check.apk
+https://github.com/avipbizsolutions/AVIPSolarInstallCheck/releases/latest/download/AVIP-Solar-Installation.apk
 
 ## Who does what
 | Team (Users tab) | Sees | Does |
@@ -27,7 +29,7 @@ Five wrong PINs lock that number for 10 minutes.
 ## Photos
 Photos can only be taken with the app's own camera, which is the AVIP GPSCam camera: 4:3
 frame, live GPS stamp (mini map with pin, address, Lat/Long, facing direction, date & time),
-north arrow, GPS in EXIF. A copy goes to the phone gallery under *Pictures/AVIP Install Check*.
+north arrow, GPS in EXIF. A copy goes to the phone gallery under *Pictures/AVIP Solar Installation*.
 Photos upload in the background and wait on the phone when there is no signal. They are saved
 in Google Drive under **AVIP Install Check Photos / <Site ID> - <Customer>**; the sheet keeps the links.
 
