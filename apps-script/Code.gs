@@ -4,13 +4,18 @@
  * Bound to the Google Sheet "AVIP Solar Install Check – Database".
  * Setup (once, from the Founder/CEO Google account that owns the sheet):
  *   1. Open the sheet → Extensions → Apps Script → paste this file → Save.
- *   2. Run "setup" once and allow access (creates the photo folder and the secret).
+ *   2. Paste AuthClient.gs as a second file; add AUTH_URL and AUTH_KEY in Script properties.
+ *      Run "setup" once and allow access (creates the photo folder, checks the common login).
  *   3. Deploy → New deployment → Web app → Execute as: Me, Who has access: Anyone → Deploy.
  *   4. Put the /exec URL in config.json in the app's GitHub repo ("endpoint").
  * After any change to this file: Deploy → Manage deployments → Edit → New version.
  *
  * The phone never sees the sheet. It sends JSON to this web app, signed with
  * SHARED_KEY, and every call except login carries the user's session token.
+ *
+ * Login is common to all AVIP Solar apps (AVIP Team Directory → AVIP Auth):
+ * paste AuthClient.gs (from the AVIPSolarExpense repo, auth-service/) as a second
+ * file here, and add AUTH_URL and AUTH_KEY in Project Settings → Script properties.
  */
 
 const SHARED_KEY = 'avip-install-9Kp2';
@@ -29,9 +34,6 @@ const S = {
   REWORK: 'Rework',
   CLOSED: 'QC Approved (Closed)',
 };
-
-const WEAK_PINS = ['0000', '1111', '2222', '3333', '4444', '5555', '6666', '7777', '8888', '9999',
-  '1234', '2345', '3456', '4567', '5678', '6789', '4321', '9876', '1212', '1122', '0123', '1004'];
 
 // Fields each team may set on a site with "saveSite".
 const SALES_FIELDS = ['Customer Name', 'Mobile', 'WhatsApp', 'Address', 'District', 'Latitude', 'Longitude',
@@ -93,8 +95,10 @@ const HANDLERS = {
 
 /** Run once from the editor. */
 function setup() {
-  secret();
   photoRoot();
+  const p = PropertiesService.getScriptProperties();
+  if (!p.getProperty('AUTH_URL') || !p.getProperty('AUTH_KEY')) Logger.log('Add AUTH_URL and AUTH_KEY in Project Settings → Script properties (common AVIP login).');
+  else Logger.log('Common login OK: ' + teamPeople().length + ' people can use AVIP Solar Installation.');
   Logger.log('Ready. Now deploy as a web app (Execute as: Me, Who has access: Anyone).');
   Logger.log('Link key for the AVIP Site Visits Log script (INSTALL_CHECK_KEY): ' + linkKey());
 }
@@ -203,35 +207,22 @@ function plain(o) {
   return r;
 }
 
-// ------------------------------------------------------------------ security
+// ------------------------------------------------------------------ login (AVIP Team Directory)
+//
+// Login, PINs and teams come from the AVIP Team Directory through AVIP Auth
+// (AuthClient.gs, pasted next to this file; AUTH_URL and AUTH_KEY in Script properties).
+// The person's "Installation App Role" there (Sales, Manager, Dispatch, Installation)
+// is their team in this app. The old Users tab of this sheet is no longer used.
 
-function secret() {
-  const p = PropertiesService.getScriptProperties();
-  let s = p.getProperty('SECRET');
-  if (!s) {
-    s = Utilities.getUuid() + Utilities.getUuid();
-    p.setProperty('SECRET', s);
-  }
-  return s;
+const APP = 'installation';
+const TEAMS = ['Sales', 'Manager', 'Dispatch', 'Installation'];
+
+/** The directory person, shaped like the old Users-tab row the rest of this file reads. */
+function localUser(a) {
+  const t = clean(a.role);
+  if (TEAMS.indexOf(t) < 0) throw new Error('Your Installation App Role "' + t + '" is not one of ' + TEAMS.join(', ') + '. Ask the office.');
+  return { 'User ID': clean(a.id), 'Name': clean(a.name), 'Mobile': clean(a.mobile), 'Team': t, 'Designation': clean(a.designation) };
 }
-
-function b64(bytes) { return Utilities.base64EncodeWebSafe(bytes).replace(/=+$/, ''); }
-
-function pinHash(mobile, pin) {
-  return '#' + b64(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, secret() + '|' + last10(mobile) + '|' + pin)).slice(0, 32);
-}
-
-function tokenFor(user) {
-  const sig = b64(Utilities.computeHmacSha256Signature(user['User ID'] + '|' + String(user['PIN']), secret())).slice(0, 24);
-  return user['User ID'] + '.' + sig;
-}
-
-function findUserByMobile(mobile) {
-  const m = last10(mobile);
-  return rows('Users').filter(function (u) { return last10(u['Mobile']) === m; })[0];
-}
-
-function isActive(u) { return clean(u['Active']).toLowerCase() !== 'no'; }
 
 function userInfo(u) {
   return {
@@ -240,14 +231,9 @@ function userInfo(u) {
   };
 }
 
-/** Checks the session token; returns the user. */
+/** Checks the session token with AVIP Auth; returns the user. */
 function auth(d, allowTempPin) {
-  const tok = clean(d.token);
-  const id = tok.split('.')[0];
-  const u = rows('Users').filter(function (x) { return clean(x['User ID']) === id; })[0];
-  if (!u || !isActive(u) || tokenFor(u) !== tok) throw new Error('SESSION: Please login again.');
-  if (!allowTempPin && String(u['PIN']).charAt(0) !== '#') throw new Error('SESSION: Please set your own PIN first.');
-  return u;
+  return localUser(authUser_(APP, d, allowTempPin));
 }
 
 function team(u) { return clean(u['Team']); }
@@ -257,37 +243,24 @@ function need(u, teams) {
   if (teams.indexOf(team(u)) < 0) throw new Error('Your team cannot do this.');
 }
 
-// ------------------------------------------------------------------ login & PIN
-
 function login(d) {
-  const mobile = last10(d.mobile);
-  const pin = clean(d.pin);
-  const cache = CacheService.getScriptCache();
-  const failKey = 'fail_' + mobile;
-  const fails = Number(cache.get(failKey) || 0);
-  if (fails >= 5) throw new Error('Too many wrong PINs. Try again after 10 minutes.');
-  const u = findUserByMobile(mobile);
-  if (!u || !isActive(u)) throw new Error('This mobile number is not registered. Ask the office.');
-  const stored = String(u['PIN']).trim();
-  const ok = stored.charAt(0) === '#' ? stored === pinHash(mobile, pin) : stored === pin;
-  if (!ok) {
-    cache.put(failKey, String(fails + 1), 600);
-    throw new Error('Wrong PIN.');
-  }
-  cache.remove(failKey);
-  return { user: userInfo(u), token: tokenFor(u), mustSetPin: stored.charAt(0) !== '#' };
+  const r = authLogin_(APP, d);
+  return { user: userInfo(localUser(r.user)), token: r.token, mustSetPin: r.mustSetPin };
 }
 
 function setPin(d) {
-  const u = auth(d, true);
-  const pin = clean(d.newPin);
-  if (!/^\d{4}$/.test(pin)) throw new Error('PIN must be 4 digits.');
-  if (WEAK_PINS.indexOf(pin) >= 0) throw new Error('This PIN is too easy. Choose another.');
-  if (String(u['PIN']).trim() === pin) throw new Error('Choose a PIN different from the office PIN.');
-  const hash = pinHash(u['Mobile'], pin);
-  setFields('Users', u._row, { 'PIN': hash });
-  u['PIN'] = hash;
-  return { token: tokenFor(u), user: userInfo(u) };
+  const r = authSetPin_(APP, d);
+  return { token: r.token, user: userInfo(localUser(r.user)) };
+}
+
+/** People in the directory who use this app, as Users-tab-like rows. */
+function teamPeople() {
+  return authUsers_(APP).filter(function (p) { return TEAMS.indexOf(clean(p.role)) >= 0; }).map(localUser);
+}
+
+function findUserByMobile(mobile) {
+  const m = last10(mobile);
+  return teamPeople().filter(function (u) { return last10(u['Mobile']) === m; })[0];
 }
 
 // ------------------------------------------------------------------ reference data
@@ -312,7 +285,7 @@ function bootstrap(d) {
         photoOnNotOk: clean(r['Photo Needed on Not OK']).toLowerCase() === 'yes',
       };
     });
-  const users = rows('Users').filter(isActive);
+  const users = teamPeople();
   return {
     user: userInfo(u),
     bom: bom,

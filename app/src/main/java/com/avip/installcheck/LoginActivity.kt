@@ -11,9 +11,10 @@ import androidx.appcompat.app.AppCompatActivity
 import org.json.JSONObject
 
 /**
- * Login with mobile number + 4-digit PIN. The team (Sales, Manager, Dispatch,
- * Installation) comes from the Users tab of the office sheet. With the office
- * (temporary) PIN, the person must first set a PIN of their own.
+ * Login with mobile number + 4-digit PIN from the AVIP Team Directory: one login
+ * for AVIP Solar Sales, Installation and Expense. The team (Sales, Manager,
+ * Dispatch, Installation) is the person's Installation App Role there. With the
+ * office (temporary) PIN, the person must first set a PIN of their own.
  */
 class LoginActivity : AppCompatActivity() {
 
@@ -62,7 +63,8 @@ class LoginActivity : AppCompatActivity() {
             if (m.length != 10) { mobile.error = "10 अंकों का number डालें"; return@pillButton }
             if (p.length != 4) { pin.error = "4 अंकों का PIN"; return@pillButton }
             busy("Login हो रहा है…", {
-                Api.call(this, "login", JSONObject().put("mobile", m).put("pin", p).put("token", ""))
+                Api.call(this, "login", JSONObject().put("mobile", m).put("pin", p).put("token", "")
+                    .put("deviceId", deviceId()).put("appVersion", Updater.currentVersionName(this)))
             }) { o ->
                 val user = User.from(o.getJSONObject("user"))
                 val must = o.optBoolean("mustSetPin")
@@ -70,8 +72,8 @@ class LoginActivity : AppCompatActivity() {
                 if (must) showSetPin() else openHome()
             }
         }, lp().margins(this, t = 20))
-        f.addView(note("आपकी Team (Sales, Manager, Dispatch, Installation) Office की Google Sheet से अपने आप तय होगी। आपको सिर्फ अपनी Team का काम दिखेगा।"), lp().margins(this, t = 18))
-        f.addView(text("PIN भूल गए? Manager से नया temporary PIN लें।", 13f, Ui.MUTED) { gravity = Gravity.CENTER }, lp().margins(this, t = 4))
+        f.addView(note("AVIP Solar Sales, Installation और Expense: तीनों Apps में एक ही Mobile Number और PIN। आपकी Team Office की Team Directory से तय होगी।"), lp().margins(this, t = 18))
+        f.addView(text("PIN भूल गए? Office से नया temporary PIN लें।", 13f, Ui.MUTED) { gravity = Gravity.CENTER }, lp().margins(this, t = 4))
     }
 
     private fun showSetPin() {
@@ -85,7 +87,8 @@ class LoginActivity : AppCompatActivity() {
             listOf(
                 "1234, 0000, 1111 जैसा आसान PIN नहीं चलेगा",
                 "Office भी आपका PIN नहीं देख सकता",
-                "भूल गए तो Manager नया temporary PIN देंगे",
+                "यही PIN Sales और Expense App में भी चलेगा",
+                "भूल गए तो Office नया temporary PIN देगा",
             ).forEach { line ->
                 addView(horizontal {
                     addView(text("✓", 14f, Ui.GREEN, bold = true), lp(WRAP, WRAP).margins(context, r = 8))
@@ -112,6 +115,11 @@ class LoginActivity : AppCompatActivity() {
             setOnClickListener { Session.clear(this@LoginActivity); showLogin() }
         }, lp())
     }
+
+    @android.annotation.SuppressLint("HardwareIds")
+    private fun deviceId(): String = try {
+        android.os.Build.MODEL + " · " + (android.provider.Settings.Secure.getString(contentResolver, android.provider.Settings.Secure.ANDROID_ID) ?: "").take(8)
+    } catch (_: Exception) { android.os.Build.MODEL }
 
     private fun openHome() {
         startActivity(Intent(this, HomeActivity::class.java))

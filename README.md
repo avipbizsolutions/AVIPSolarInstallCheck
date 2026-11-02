@@ -21,10 +21,18 @@ Installation In Progress → Installation Submitted → QC Approved (Closed). Si
 to Sales, Balance Pending, Rework.
 
 ## Login and PINs
-Mobile number + 4-digit PIN from the **Users** tab. The PIN typed there is temporary: at first
-login the app makes the person choose their own PIN and stores only a scrambled code
-(starting with `#`) in the sheet. To reset a forgotten PIN, type a new 4-digit PIN in that cell.
-Five wrong PINs lock that number for 10 minutes.
+One login for all AVIP Solar internal apps (Sales, Installation, Expense). People, PINs and roles
+live in the private Google Sheet **AVIP Team Directory (Confidential)**; its own script, **AVIP Auth**
+(code in the AVIPSolarExpense repo, `auth-service/`), checks every login.
+
+- The team in this app is the person's **Installation App Role** in the directory: Sales, Manager,
+  Dispatch or Installation. A blank role means no access to this app.
+- Mobile number + 4-digit PIN. The office types a temporary PIN in the directory; at first login the
+  person chooses their own PIN, kept only as a salted scrambled code. To reset a forgotten PIN, type a
+  new temporary PIN in the PIN cell.
+- Five wrong PINs lock the number for 15 minutes. Status "Disabled" blocks the person in every app.
+- Names in **Sales Person** and **Installation Team** on the Sites tab must match the names in the
+  directory. The old **Users** tab of this sheet is no longer used.
 
 ## Photos
 Photos can only be taken with the app's own camera, which is the AVIP GPSCam camera: 4:3
@@ -35,8 +43,10 @@ in Google Drive under **AVIP Install Check Photos / <Site ID> - <Customer>**; th
 
 ## One-time setup (office)
 1. Open the Google Sheet **AVIP Solar Install Check – Database** from the account that owns it.
-2. Extensions → Apps Script → paste `apps-script/Code.gs` → Save.
-3. Run **setup** once and allow access.
+2. Extensions → Apps Script → paste `apps-script/Code.gs` as **Code.gs** and `apps-script/AuthClient.gs`
+   as a second file **AuthClient.gs** → Save.
+3. Project Settings → Script properties: add **AUTH_URL** (AVIP Auth web app URL) and **AUTH_KEY**
+   (AVIP Auth server key). Run **setup** once and allow access.
 4. Deploy → New deployment → type **Web app** → Execute as **Me**, Who has access **Anyone** → Deploy.
 5. Copy the `/exec` URL into `config.json` in this repo (`"endpoint": "…"`). Phones read it at every launch.
 
@@ -59,7 +69,7 @@ in the repo: every update must be signed with it.
 ## Code map
 | File | What it does |
 |---|---|
-| `apps-script/Code.gs` | Backend on the Google Sheet: login/PIN, sites, materials, dispatch, serials, photos to Drive, checklist, sign-off, QC, status log, link from AVIP Solar Sales |
+| `apps-script/Code.gs`, `AuthClient.gs` | Backend on the Google Sheet: login via AVIP Auth, sites, materials, dispatch, serials, photos to Drive, checklist, sign-off, QC, status log, link from AVIP Solar Sales |
 | `Api.kt` | Calls the web app; session; teams |
 | `Data.kt` | Sites, statuses, BOM / checklist lists |
 | `Uploads.kt` | Background photo & serial upload queue |
