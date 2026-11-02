@@ -252,7 +252,7 @@ object ReportPdf {
 
     /** Builds the report, saves a copy to the office Drive and opens WhatsApp to the customer. */
     fun shareFor(a: AppCompatActivity, site: Site, after: (() -> Unit)? = null) {
-        a.busy("Report बन रही है…", { saveToOffice(a, site) }) { f -> sendOnWhatsApp(a, site, f); after?.invoke() }
+        a.busy(tr("Report बन रही है…", "Making report…"), { saveToOffice(a, site) }) { f -> sendOnWhatsApp(a, site, f); after?.invoke() }
     }
 
     /** Opens WhatsApp to the customer with an already built report. */
@@ -268,7 +268,7 @@ object ReportPdf {
         val opened = listOf("com.whatsapp", "com.whatsapp.w4b").any { pkg ->
             try { a.startActivity(Intent(base).setPackage(pkg)); true } catch (_: Exception) { false }
         }
-        if (!opened) a.startActivity(Intent.createChooser(base, "Report भेजें"))
+        if (!opened) a.startActivity(Intent.createChooser(base, tr("Report भेजें", "Send report")))
         Thread { try { Api.call(a, "sentToCustomer", JSONObject().put("siteId", site.id)) } catch (_: Exception) {} }.start()
     }
 }

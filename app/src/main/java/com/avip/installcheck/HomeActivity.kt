@@ -30,6 +30,7 @@ class HomeActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Lang.load(this)
         user = Session.user(this) ?: run { startActivity(Intent(this, LoginActivity::class.java)); finish(); return }
         filter = filters().first().first
         Ref.loadCached(this)
@@ -52,10 +53,10 @@ class HomeActivity : AppCompatActivity() {
 
     /** (key, label) filters per team. */
     private fun filters(): List<Pair<String, String>> = when (user.team) {
-        Team.MANAGER -> listOf("Action" to "आपके Action", "All" to "सभी Sites", "Closed" to "Closed")
-        Team.SALES -> listOf("All" to "सभी", Status.DRAFT to "Draft", Status.SENT_BACK to "वापस आई", Status.SUBMITTED to "Verify में", "Later" to "आगे बढ़ी")
-        Team.DISPATCH -> listOf("All" to "सभी", Status.APPROVED to "Dispatch के लिए", "Balance" to "Balance बाकी")
-        else -> listOf("Open" to "आज के Jobs", Status.REWORK to "Rework", Status.INSTALL_SUBMITTED to "Submitted")
+        Team.MANAGER -> listOf("Action" to tr("आपके Action", "Your actions"), "All" to tr("सभी Sites", "All sites"), "Closed" to "Closed")
+        Team.SALES -> listOf("All" to tr("सभी", "All"), Status.DRAFT to "Draft", Status.SENT_BACK to tr("वापस आई", "Sent back"), Status.SUBMITTED to tr("Verify में", "Awaiting verification"), "Later" to tr("आगे बढ़ी", "Moved ahead"))
+        Team.DISPATCH -> listOf("All" to tr("सभी", "All"), Status.APPROVED to tr("Dispatch के लिए", "Ready for dispatch"), "Balance" to tr("Balance बाकी", "Balance pending"))
+        else -> listOf("Open" to tr("आज के Jobs", "Today's jobs"), Status.REWORK to "Rework", Status.INSTALL_SUBMITTED to "Submitted")
     }
 
     private fun matches(s: Site, key: String = filter): Boolean = when (key) {
@@ -82,12 +83,15 @@ class HomeActivity : AppCompatActivity() {
                 addView(barButton(R.drawable.ic_refresh) { load() })
                 addView(barButton(R.drawable.ic_logout) { logout() })
             })
-            addView(text("नमस्ते, ${user.name}", 15f, 0xFFC9D6E2.toInt()), lp().margins(context, t = 14))
+            addView(horizontal {
+                addView(text(tr("नमस्ते, ${user.name}", "Hello, ${user.name}"), 15f, 0xFFC9D6E2.toInt()), lp(0, WRAP, 1f))
+                addView(langToggle(), lp(WRAP, WRAP))
+            }, lp().margins(context, t = 10))
             addView(text(when (user.team) {
-                Team.MANAGER -> "सभी Sites का Status"
-                Team.SALES -> "मेरी Sites"
-                Team.DISPATCH -> "Dispatch के लिए Sites"
-                else -> "मेरे Installation Jobs"
+                Team.MANAGER -> tr("सभी Sites का Status", "Status of all sites")
+                Team.SALES -> tr("मेरी Sites", "My sites")
+                Team.DISPATCH -> tr("Dispatch के लिए Sites", "Sites for dispatch")
+                else -> tr("मेरे Installation Jobs", "My installation jobs")
             }, 22f, Color.WHITE, bold = true), lp().margins(context, t = 2))
             stats = horizontal { }
             addView(stats, lp().margins(context, t = 12, r = 8))
@@ -97,7 +101,7 @@ class HomeActivity : AppCompatActivity() {
             background = rounded(Ui.SUN_LIGHT, dpf(10f))
             setPadding(dp(12), dp(8), dp(12), dp(8))
             visibility = View.GONE
-            setOnClickListener { Uploads.flush(this@HomeActivity); toast("Upload फिर से शुरू…") }
+            setOnClickListener { Uploads.flush(this@HomeActivity); toast(tr("Upload फिर से शुरू…", "Restarting upload…")) }
         }
         loading = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
             isIndeterminate = true
@@ -118,7 +122,7 @@ class HomeActivity : AppCompatActivity() {
             setBackgroundColor(Ui.BG)
             addView(ScrollView(context).apply { addView(body) }, FrameLayout.LayoutParams(MATCH, MATCH))
             if (user.isSales || user.isManager) {
-                addView(pillButton("+  नई Site", Ui.SUN, Ui.TEXT, heightDp = 56) {
+                addView(pillButton(tr("+  नई Site", "+  New site"), Ui.SUN, Ui.TEXT, heightDp = 56) {
                     startActivity(Intent(this@HomeActivity, SiteFormActivity::class.java))
                 }.apply { elevation = dpf(6f) }, FrameLayout.LayoutParams(WRAP, WRAP, Gravity.BOTTOM or Gravity.END).apply {
                     setMargins(0, 0, dp(18), dp(22))
@@ -163,8 +167,8 @@ class HomeActivity : AppCompatActivity() {
             )
             Team.SALES -> listOf(
                 Triple(all.count { it.status == Status.DRAFT }, "Draft", false),
-                Triple(all.count { it.status == Status.SENT_BACK }, "वापस आई", true),
-                Triple(all.count { Status.step(it.status) >= 2 }, "आगे बढ़ी", false),
+                Triple(all.count { it.status == Status.SENT_BACK }, tr("वापस आई", "Sent back"), true),
+                Triple(all.count { Status.step(it.status) >= 2 }, tr("आगे बढ़ी", "Moved ahead"), false),
             )
             Team.DISPATCH -> listOf(
                 Triple(all.count { it.status == Status.APPROVED }, "Dispatch", true),
@@ -185,7 +189,7 @@ class HomeActivity : AppCompatActivity() {
         listBox.removeAllViews()
         val shown = Sites.all.filter { matches(it) }
         if (shown.isEmpty()) {
-            listBox.addView(text(if (loadedOnce) "यहाँ अभी कोई Site नहीं है।" else "Load हो रहा है…", 15f, Ui.MUTED) {
+            listBox.addView(text(if (loadedOnce) tr("यहाँ अभी कोई Site नहीं है।", "No sites here yet.") else tr("Load हो रहा है…", "Loading…"), 15f, Ui.MUTED) {
                 gravity = Gravity.CENTER
                 setPadding(0, dp(40), 0, dp(40))
             }, lp())
@@ -207,7 +211,7 @@ class HomeActivity : AppCompatActivity() {
             addView(statusPill(s.status))
         })
         if (s.fromSalesApp && Status.step(s.status) == 0) {
-            addView(note("AVIP Solar Sales से आया · Visit ${s.s("Sales Visit No.")}" +
+            addView(note(tr("AVIP Solar Sales से आया · Visit ${s.s("Sales Visit No.")}", "From AVIP Solar Sales · Visit ${s.s(\"Sales Visit No.\")}") +
                 (if (s.s("Installation Date").isNotBlank()) " · Install ${Fmt.date(s.s("Installation Date"))}" else ""),
                 Ui.GREEN_LIGHT, 0xFF145E39.toInt()), lp().margins(context, t = 10))
         }
@@ -244,7 +248,7 @@ class HomeActivity : AppCompatActivity() {
     private fun showUploads() {
         val n = Uploads.pendingCount(this)
         uploadsNote.visibility = if (n > 0) View.VISIBLE else View.GONE
-        uploadsNote.text = "$n photo upload बाकी हैं · Internet आने पर अपने आप जाएँगी (दबाकर फिर कोशिश करें)"
+        uploadsNote.text = tr("$n photo upload बाकी हैं · Internet आने पर अपने आप जाएँगी (दबाकर फिर कोशिश करें)", "$n photos waiting to upload · they go automatically when the internet is back (tap to retry)")
     }
 
     private fun load() {
@@ -262,7 +266,7 @@ class HomeActivity : AppCompatActivity() {
             loading.visibility = View.GONE
             if (error != null) {
                 if (error is ApiException && error.sessionExpired) { showError(error); return@launch }
-                toast(error.message ?: "Load नहीं हुआ")
+                toast(error.message ?: tr("Load नहीं हुआ", "Did not load"))
             } else {
                 loadedOnce = true
             }
@@ -272,7 +276,7 @@ class HomeActivity : AppCompatActivity() {
 
     private fun logout() {
         val pendingUploads = Uploads.pendingCount(this)
-        confirm("Logout?", if (pendingUploads > 0) "$pendingUploads photos अभी upload नहीं हुईं। Logout के बाद वे login करने पर जाएँगी।" else "क्या आप Logout करना चाहते हैं?") {
+        confirm("Logout?", if (pendingUploads > 0) tr("$pendingUploads photos अभी upload नहीं हुईं। Logout के बाद वे login करने पर जाएँगी।", "$pendingUploads photos are not uploaded yet. After logout they will upload at the next login.") else tr("क्या आप Logout करना चाहते हैं?", "Do you want to log out?")) {
             Session.clear(this)
             startActivity(Intent(this, LoginActivity::class.java))
             finish()

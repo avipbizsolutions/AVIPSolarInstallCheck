@@ -8,6 +8,9 @@ sales visit to the quality-checked installation.
 **Download the latest APK:**
 https://github.com/avipbizsolutions/AVIPSolarInstallCheck/releases/latest/download/AVIP-Solar-Installation.apk
 
+Screens in Hindi-English or English: switch with the **English / हिंदी** button on the login and
+home screens; each phone remembers its choice. The customer Installation Report stays in Hindi-English.
+
 ## Who does what
 | Team (Users tab) | Sees | Does |
 |---|---|---|

@@ -50,7 +50,7 @@ fun Activity.showError(e: Throwable) {
     }
     if (isFinishing) return
     AlertDialog.Builder(this)
-        .setTitle("नहीं हो सका")
+        .setTitle(tr("नहीं हो सका", "Could not complete"))
         .setMessage(e.message ?: "Something went wrong.")
         .setPositiveButton("OK", null)
         .show()
@@ -58,10 +58,10 @@ fun Activity.showError(e: Throwable) {
 
 fun Activity.toast(m: String) = Toast.makeText(this, m, Toast.LENGTH_SHORT).show()
 
-fun Activity.confirm(title: String, message: String, yes: String = "हाँ", onYes: () -> Unit) {
+fun Activity.confirm(title: String, message: String, yes: String = tr("हाँ", "Yes"), onYes: () -> Unit) {
     AlertDialog.Builder(this).setTitle(title).setMessage(message)
         .setPositiveButton(yes) { _, _ -> onYes() }
-        .setNegativeButton("नहीं", null)
+        .setNegativeButton(tr("नहीं", "No"), null)
         .show()
 }
 
@@ -74,7 +74,7 @@ fun Activity.askText(title: String, hint: String, initial: String = "", required
     d.setOnShowListener {
         d.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
             val v = e.text.toString().trim()
-            if (required && v.isBlank()) { e.error = "ज़रूरी है"; return@setOnClickListener }
+            if (required && v.isBlank()) { e.error = tr("ज़रूरी है", "Required"); return@setOnClickListener }
             d.dismiss(); onOk(v)
         }
     }

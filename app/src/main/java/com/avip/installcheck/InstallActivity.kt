@@ -82,8 +82,9 @@ class InstallActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Lang.load(this)
         site = Sites.byId(intent.getStringExtra(SiteActivity.EXTRA_ID)) ?: run { finish(); return }
-        if (Ref.checklist.isEmpty()) { toast("Checklist load नहीं हुई। Internet check करें।"); finish(); return }
+        if (Ref.checklist.isEmpty()) { toast(tr("Checklist load नहीं हुई। Internet check करें।", "Checklist did not load. Check the internet.")); finish(); return }
         draft = InstallDraft(this, site.id, site.round)
         // start from what is already in the sheet for this round
         site.checklistRows.filter { it.optString("Round") == site.round.toString() }.forEach { row ->
@@ -118,7 +119,7 @@ class InstallActivity : AppCompatActivity() {
 
     private fun render() {
         val scrollY = (if (::body.isInitialized) (body.parent as? View)?.scrollY else null) ?: 0
-        val submit = pillButton("Office को Submit करें", Ui.GREEN, Color.WHITE, heightDp = 54) { submit() }
+        val submit = pillButton(tr("Office को Submit करें", "Submit to office"), Ui.GREEN, Color.WHITE, heightDp = 54) { submit() }
         body = screen(site.customer, "Installation · Round ${site.round}", bottom = vertical {
             addView(horizontal {
                 addView(pillButton("Save", Color.WHITE, Ui.TEXT, heightDp = 54) { saveProgress(false) }.apply {
@@ -158,10 +159,10 @@ class InstallActivity : AppCompatActivity() {
             body.addView(note("QC Rework: " + (site.lastSignoff?.optString("QC Remarks") ?: ""), Ui.DANGER_LIGHT, Ui.DANGER))
         }
         if (site.balanceTotal() > 0) {
-            body.addView(note("Godown से कुछ material अभी बाकी है (Balance). ज़रूरत हो तो Pending Work में लिखें।", Ui.SUN_LIGHT, 0xFF4A3300.toInt()))
+            body.addView(note(tr("Godown से कुछ material अभी बाकी है (Balance). ज़रूरत हो तो Pending Work में लिखें।", "Some material from the godown is still pending (balance). Add it to pending work if needed."), Ui.SUN_LIGHT, 0xFF4A3300.toInt()))
         }
         val pendingUp = Uploads.pendingFor(this, site.id).size
-        if (pendingUp > 0) body.addView(note("⏳ $pendingUp photos upload हो रही हैं…", Ui.SUN_LIGHT, Ui.SUN_TEXT))
+        if (pendingUp > 0) body.addView(note(tr("⏳ $pendingUp photos upload हो रही हैं…", "⏳ Uploading $pendingUp photos…"), Ui.SUN_LIGHT, Ui.SUN_TEXT))
         Uploads.errors(this, site.id).takeIf { it.isNotEmpty() }?.let { body.addView(note(it.take(3).joinToString("\n"), Ui.DANGER_LIGHT, Ui.DANGER)) }
 
         renderSerials()
@@ -177,7 +178,7 @@ class InstallActivity : AppCompatActivity() {
     private fun renderSerials() {
         val serials = site.serials
         if (serials.isEmpty()) return
-        body.addView(section("Serial No. मिलान", "Godown से आए Panel / Inverter के Serial site पर check करें") {
+        body.addView(section(tr("Serial No. मिलान", "Serial no. check"), tr("Godown से आए Panel / Inverter के Serial site पर check करें", "Check the serials of panels and inverters from the godown at the site")) {
             serials.forEach { r ->
                 val matched = r.optString("Matched at Site") == "Yes"
                 addView(horizontal {
@@ -186,22 +187,22 @@ class InstallActivity : AppCompatActivity() {
                         addView(text(r.optString("Serial No."), 14.5f, Ui.TEXT, bold = true))
                         addView(text(r.optString("Item Type"), 12.5f, Ui.MUTED))
                     }, lp(0, WRAP, 1f))
-                    addView(if (matched) pill("मिला ✓", Ui.GREEN_LIGHT, 0xFF145E39.toInt()) else pill("बाकी", Ui.SUN_LIGHT, Ui.SUN_TEXT))
+                    addView(if (matched) pill(tr("मिला ✓", "Matched ✓"), Ui.GREEN_LIGHT, 0xFF145E39.toInt()) else pill(tr("बाकी", "Pending"), Ui.SUN_LIGHT, Ui.SUN_TEXT))
                 })
             }
-            addView(pillButton("Serial No. मिलाएँ", Ui.BRAND, Color.WHITE, heightDp = 46) { matchSerial() }, lp().margins(context, t = 10))
+            addView(pillButton(tr("Serial No. मिलाएँ", "Match serial no."), Ui.BRAND, Color.WHITE, heightDp = 46) { matchSerial() }, lp().margins(context, t = 10))
         })
     }
 
     private fun matchSerial() {
-        askText("Serial No. मिलाएँ", "Panel / Inverter पर लिखा Serial No.") { sn ->
-            busy("Check हो रहा है…", {
+        askText(tr("Serial No. मिलाएँ", "Match serial no."), tr("Panel / Inverter पर लिखा Serial No.", "Serial no. on the panel / inverter")) { sn ->
+            busy(tr("Check हो रहा है…", "Checking…"), {
                 val o = Api.call(this, "serialMatch", JSONObject().put("siteId", site.id).put("serial", sn.trim()))
                 Sites.reload(this)
                 o
             }) { o ->
                 site = Sites.byId(site.id) ?: site
-                toast("✓ ${o.optString("itemType")} मिला")
+                toast(tr("✓ ${o.optString("itemType")} मिला", "✓ ${o.optString(\"itemType\")} matched"))
                 render()
             }
         }
@@ -213,7 +214,7 @@ class InstallActivity : AppCompatActivity() {
         addView(horizontal {
             gravity = Gravity.TOP
             addView(text(item.text, 15f, Ui.TEXT), lp(0, WRAP, 1f))
-            if (item.critical) addView(pill("ज़रूरी", Ui.DANGER_LIGHT, Ui.DANGER), lp(WRAP, WRAP).margins(context, l = 6))
+            if (item.critical) addView(pill(tr("ज़रूरी", "Required"), Ui.DANGER_LIGHT, Ui.DANGER), lp(WRAP, WRAP).margins(context, l = 6))
         })
         addView(horizontal {
             addView(okNa(r) { v -> draft.setResult(item.id, v); render() }, lp(0, WRAP, 1f))
@@ -227,18 +228,18 @@ class InstallActivity : AppCompatActivity() {
             }, lp(dp(56), WRAP))
         }, lp().margins(context, t = 10))
         if (r == "Not OK") {
-            val remark = input("क्या कमी है? (ज़रूरी)", InputType.TYPE_CLASS_TEXT, draft.remark(item.id))
+            val remark = input(tr("क्या कमी है? (ज़रूरी)", "What's wrong? (required)"), InputType.TYPE_CLASS_TEXT, draft.remark(item.id))
             remark.onChange { draft.setRemark(item.id, it.trim()) }
             addView(remark, lp().margins(context, t = 10))
             if (item.photoOnNotOk && !hasPhoto(item.id)) {
-                addView(note("Not OK पर Photo ज़रूरी है — 📷 दबाएँ", Ui.DANGER_LIGHT, Ui.DANGER), lp().margins(context, t = 8))
+                addView(note(tr("Not OK पर Photo ज़रूरी है — 📷 दबाएँ", "A photo is required for Not OK. Tap 📷"), Ui.DANGER_LIGHT, Ui.DANGER), lp().margins(context, t = 8))
             }
         }
     }
 
     private fun renderPhotos() {
-        body.addView(text("ज़रूरी GPS Photos", 16f, Ui.TEXT, bold = true), lp().margins(this, t = 6, b = 4))
-        body.addView(text("App के camera से — AVIP GPSCam जैसा stamp अपने आप लगेगा", 13f, Ui.MUTED), lp().margins(this, b = 8))
+        body.addView(text(tr("ज़रूरी GPS Photos", "Required GPS photos"), 16f, Ui.TEXT, bold = true), lp().margins(this, t = 6, b = 4))
+        body.addView(text(tr("App के camera से — AVIP GPSCam जैसा stamp अपने आप लगेगा", "With the app's camera: the AVIP GPSCam stamp is added automatically"), 13f, Ui.MUTED), lp().margins(this, b = 8))
         val waiting = Uploads.pendingLinks(this, site.id)
         photoItems().chunked(2).forEach { pair ->
             body.addView(horizontal {
@@ -257,7 +258,7 @@ class InstallActivity : AppCompatActivity() {
                                     setImageBitmap(thumb(local))
                                 }, android.widget.FrameLayout.LayoutParams(MATCH, MATCH))
                             } else {
-                                addView(text(if (uploaded) "✓ Uploaded" else "📷\nPhoto लें", 15f, if (uploaded) Color.WHITE else Ui.TEXT, bold = true) {
+                                addView(text(if (uploaded) "✓ Uploaded" else tr("📷\nPhoto लें", "📷\nTake photo"), 15f, if (uploaded) Color.WHITE else Ui.TEXT, bold = true) {
                                     gravity = Gravity.CENTER
                                 }, android.widget.FrameLayout.LayoutParams(MATCH, MATCH))
                             }
@@ -282,9 +283,9 @@ class InstallActivity : AppCompatActivity() {
     } catch (_: Exception) { null }
 
     private fun renderPending() {
-        body.addView(section("बाकी काम या समस्या", "जो काम पूरा नहीं हुआ (जैसे Net meter, material कम)") {
+        body.addView(section(tr("बाकी काम या समस्या", "Pending work or problems"), tr("जो काम पूरा नहीं हुआ (जैसे Net meter, material कम)", "Work not finished (e.g. net meter, material short)")) {
             val open = site.pending.filter { it.optString("Status") == "Open" }
-            if (open.isEmpty()) addView(text("कोई काम बाकी नहीं", 14f, Ui.MUTED))
+            if (open.isEmpty()) addView(text(tr("कोई काम बाकी नहीं", "No pending work"), 14f, Ui.MUTED))
             open.forEach { p ->
                 addView(note(p.optString("Pending Item") +
                     (if (p.optString("Reason").isNotBlank()) " · ${p.optString("Reason")}" else "") +
@@ -293,18 +294,18 @@ class InstallActivity : AppCompatActivity() {
                     setOnLongClickListener { closePending(p.optString("Pending Item")); true }
                 })
             }
-            addView(pillButton("+ बाकी काम जोड़ें", Color.WHITE, Ui.TEXT, heightDp = 44) { addPending() }.apply {
+            addView(pillButton(tr("+ बाकी काम जोड़ें", "+ Add pending work"), Color.WHITE, Ui.TEXT, heightDp = 44) { addPending() }.apply {
                 background = rounded(Color.WHITE, dpf(22f), 0xFF8A99A8.toInt(), dp(1))
             }, lp().margins(context, t = 6))
-            if (open.isNotEmpty()) addView(text("काम पूरा होने पर उस पर देर तक दबाएँ।", 12f, Ui.MUTED), lp().margins(context, t = 6))
+            if (open.isNotEmpty()) addView(text(tr("काम पूरा होने पर उस पर देर तक दबाएँ।", "Long-press an item when the work is done."), 12f, Ui.MUTED), lp().margins(context, t = 6))
         })
     }
 
     private fun addPending() {
-        val item = input("क्या बाकी है? जैसे Net meter")
-        val reason = input("कारण, जैसे DISCOM से")
+        val item = input(tr("क्या बाकी है? जैसे Net meter", "What's pending? e.g. net meter"))
+        val reason = input(tr("कारण, जैसे DISCOM से", "Reason, e.g. waiting for DISCOM"))
         var date = ""
-        val dateView = text("कब तक? (तारीख चुनें)", 15f, Ui.TEXT) {
+        val dateView = text(tr("कब तक? (तारीख चुनें)", "By when? (choose a date)"), 15f, Ui.TEXT) {
             background = rounded(Color.WHITE, dpf(12f), 0xFFB9C5D0.toInt(), dp(1))
             setPadding(dp(14), dp(12), dp(14), dp(12))
         }
@@ -312,14 +313,14 @@ class InstallActivity : AppCompatActivity() {
         val box = vertical(16) {
             addView(item, lp()); addView(reason, lp().margins(context, t = 8)); addView(dateView, lp().margins(context, t = 8))
         }
-        val d = AlertDialog.Builder(this).setTitle("बाकी काम जोड़ें").setView(box)
-            .setPositiveButton("जोड़ें", null).setNegativeButton("Cancel", null).create()
+        val d = AlertDialog.Builder(this).setTitle(tr("बाकी काम जोड़ें", "Add pending work")).setView(box)
+            .setPositiveButton(tr("जोड़ें", "Add"), null).setNegativeButton("Cancel", null).create()
         d.setOnShowListener {
             d.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                if (item.text.isBlank()) { item.error = "ज़रूरी"; return@setOnClickListener }
+                if (item.text.isBlank()) { item.error = tr("ज़रूरी", "Required"); return@setOnClickListener }
                 d.dismiss()
                 val arr = JSONArray().put(JSONObject().put("item", item.text.toString().trim()).put("reason", reason.text.toString().trim()).put("date", date))
-                busy("Save हो रहा है…", {
+                busy(tr("Save हो रहा है…", "Saving…"), {
                     Api.call(this, "pending", JSONObject().put("siteId", site.id).put("items", arr))
                     Sites.reload(this)
                 }) { site = Sites.byId(site.id) ?: site; render() }
@@ -329,8 +330,8 @@ class InstallActivity : AppCompatActivity() {
     }
 
     private fun closePending(item: String) {
-        confirm("काम पूरा हुआ?", "\"$item\" को पूरा mark करें?", "पूरा हुआ") {
-            busy("Save हो रहा है…", {
+        confirm(tr("काम पूरा हुआ?", "Work done?"), tr("\"$item\" को पूरा mark करें?", "Mark \"$item\" as done?"), tr("पूरा हुआ", "Done")) {
+            busy(tr("Save हो रहा है…", "Saving…"), {
                 Api.call(this, "pending", JSONObject().put("siteId", site.id).put("close", JSONArray().put(item)))
                 Sites.reload(this)
             }) { site = Sites.byId(site.id) ?: site; render() }
@@ -338,16 +339,16 @@ class InstallActivity : AppCompatActivity() {
     }
 
     private fun renderSignoff() {
-        body.addView(section("ग्राहक की पुष्टि और Sign") {
+        body.addView(section(tr("ग्राहक की पुष्टि और Sign", "Customer confirmation and signature")) {
             addView(CheckBox(context).apply {
-                text = "ग्राहक को ON/OFF करना और देखभाल बता दी"
+                text = tr("ग्राहक को ON/OFF करना और देखभाल बता दी", "Showed the customer how to switch ON/OFF and care for the system")
                 textSize = 15f
                 isChecked = draft.demo
                 setOnCheckedChangeListener { _, v -> draft.demo = v }
             })
             addView(signRow("Team Leader Sign", draft.tlSign, Session.user(context)?.name ?: ""), lp().margins(context, t = 10))
-            addView(signRow("ग्राहक का Sign", draft.customerSign, site.customer), lp().margins(context, t = 10))
-            addView(text("मैं पुष्टि करता हूँ कि ऊपर लिखा सारा काम AVIP के मानक के अनुसार पूरा किया गया है।", 13f, Ui.MUTED), lp().margins(context, t = 10))
+            addView(signRow(tr("ग्राहक का Sign", "Customer signature"), draft.customerSign, site.customer), lp().margins(context, t = 10))
+            addView(text(tr("मैं पुष्टि करता हूँ कि ऊपर लिखा सारा काम AVIP के मानक के अनुसार पूरा किया गया है।", "I confirm that all the work above was completed to AVIP standards."), 13f, Ui.MUTED), lp().margins(context, t = 10))
         })
     }
 
@@ -360,7 +361,7 @@ class InstallActivity : AppCompatActivity() {
                 scaleType = ImageView.ScaleType.FIT_CENTER
                 setImageBitmap(BitmapFactory.decodeFile(file.absolutePath))
             }, android.widget.FrameLayout.LayoutParams(MATCH, MATCH))
-            else addView(text("यहाँ दबाकर Sign करें", 15f, Ui.MUTED) { gravity = Gravity.CENTER }, android.widget.FrameLayout.LayoutParams(MATCH, MATCH))
+            else addView(text(tr("यहाँ दबाकर Sign करें", "Tap here to sign"), 15f, Ui.MUTED) { gravity = Gravity.CENTER }, android.widget.FrameLayout.LayoutParams(MATCH, MATCH))
             setOnClickListener {
                 signer.launch(Intent(this@InstallActivity, SignActivity::class.java)
                     .putExtra(SignActivity.EXTRA_FILE, file.absolutePath)
@@ -390,13 +391,13 @@ class InstallActivity : AppCompatActivity() {
 
     private fun saveProgress(quiet: Boolean) {
         val res = resultsJson()
-        if (res.length() == 0) { if (!quiet) toast("अभी कुछ भरा नहीं"); return }
-        busy("Save हो रहा है…", {
+        if (res.length() == 0) { if (!quiet) toast(tr("अभी कुछ भरा नहीं", "Nothing filled in yet")); return }
+        busy(tr("Save हो रहा है…", "Saving…"), {
             Api.call(this, "checklist", JSONObject().put("siteId", site.id).put("round", site.round.toString()).put("results", res))
             Sites.reload(this)
         }) {
             site = Sites.byId(site.id) ?: site
-            if (!quiet) toast("Save हो गया")
+            if (!quiet) toast(tr("Save हो गया", "Saved"))
             render()
         }
     }
@@ -405,28 +406,28 @@ class InstallActivity : AppCompatActivity() {
         val p = mutableListOf<String>()
         checkItems().forEach { item ->
             val r = draft.result(item.id)
-            if (r.isBlank()) p += "Checklist बाकी: ${item.text}"
-            if (r == "Not OK" && draft.remark(item.id).isBlank()) p += "Remark लिखें: ${item.text}"
-            if (r == "Not OK" && item.photoOnNotOk && !hasPhoto(item.id)) p += "Photo लें: ${item.text}"
+            if (r.isBlank()) p += tr("Checklist बाकी: ${item.text}", "Checklist pending: ${item.text}")
+            if (r == "Not OK" && draft.remark(item.id).isBlank()) p += tr("Remark लिखें: ${item.text}", "Write a remark: ${item.text}")
+            if (r == "Not OK" && item.photoOnNotOk && !hasPhoto(item.id)) p += tr("Photo लें: ${item.text}", "Take photo: ${item.text}")
         }
-        photoItems().filter { !hasPhoto(it.id) }.forEach { p += "Photo बाकी: ${it.text}" }
+        photoItems().filter { !hasPhoto(it.id) }.forEach { p += tr("Photo बाकी: ${it.text}", "Photo pending: ${it.text}") }
         val inverters = site.serials.filter { it.optString("Item Type").contains("Inverter", true) }
-        if (inverters.isNotEmpty() && inverters.none { it.optString("Matched at Site") == "Yes" }) p += "Inverter का Serial No. मिलाएँ"
-        if (!draft.customerSign.exists()) p += "ग्राहक का Sign बाकी"
-        if (!draft.tlSign.exists()) p += "Team Leader का Sign बाकी"
+        if (inverters.isNotEmpty() && inverters.none { it.optString("Matched at Site") == "Yes" }) p += tr("Inverter का Serial No. मिलाएँ", "Match the inverter serial no.")
+        if (!draft.customerSign.exists()) p += tr("ग्राहक का Sign बाकी", "Customer signature pending")
+        if (!draft.tlSign.exists()) p += tr("Team Leader का Sign बाकी", "Team leader signature pending")
         return p
     }
 
     private fun submit() {
         val p = problems()
         if (p.isNotEmpty()) {
-            AlertDialog.Builder(this).setTitle("पहले यह पूरा करें")
-                .setMessage(p.take(12).joinToString("\n") + if (p.size > 12) "\n…और ${p.size - 12}" else "")
+            AlertDialog.Builder(this).setTitle(tr("पहले यह पूरा करें", "Complete these first"))
+                .setMessage(p.take(12).joinToString("\n") + if (p.size > 12) tr("\n…और ${p.size - 12}", "\n…and ${p.size - 12} more") else "")
                 .setPositiveButton("OK", null).show()
             return
         }
-        confirm("Office को Submit करें?", "Checklist, photos और sign Office को जाएँगे और Manager QC करेंगे।", "Submit") {
-            busy("Submit हो रहा है… (photos upload होने तक रुकें)", {
+        confirm(tr("Office को Submit करें?", "Submit to office?"), tr("Checklist, photos और sign Office को जाएँगे और Manager QC करेंगे।", "The checklist, photos and signatures go to the office and the manager does QC."), "Submit") {
+            busy(tr("Submit हो रहा है… (photos upload होने तक रुकें)", "Submitting… (wait for photos to upload)"), {
                 Api.call(this, "checklist", JSONObject().put("siteId", site.id).put("round", site.round.toString()).put("results", resultsJson()))
                 Uploads.flush(this)
                 val start = System.currentTimeMillis()
@@ -435,7 +436,7 @@ class InstallActivity : AppCompatActivity() {
                     Uploads.flush(this)
                 }
                 val left = Uploads.pendingFor(this, site.id).size
-                if (left > 0) throw ApiException("$left photos अभी upload नहीं हुईं। Internet ठीक होने पर फिर Submit दबाएँ। (सब कुछ phone में save है)")
+                if (left > 0) throw ApiException(tr("$left photos अभी upload नहीं हुईं। Internet ठीक होने पर फिर Submit दबाएँ। (सब कुछ phone में save है)", "$left photos are not uploaded yet. Tap Submit again when the internet is back. (Everything is saved on the phone.)"))
                 fun b64(f: File) = android.util.Base64.encodeToString(f.readBytes(), android.util.Base64.NO_WRAP)
                 Api.call(this, "submitInstall", JSONObject().put("siteId", site.id).put("demo", draft.demo)
                     .put("tlSignature", b64(draft.tlSign)).put("customerSignature", b64(draft.customerSign)), timeoutMs = 120000)
@@ -445,14 +446,14 @@ class InstallActivity : AppCompatActivity() {
                 try { ReportPdf.saveToOffice(this, fresh) } catch (e: ApiException) { if (e.sessionExpired) throw e; null } catch (_: Exception) { null }
             }) { report ->
                 site = Sites.byId(site.id) ?: site
-                AlertDialog.Builder(this).setTitle("Submit हो गया ✓")
-                    .setMessage("Report Office को भेज दी गई और ग्राहक की AVIP Solar App में भी दिखेगी। Manager QC करेंगे।\n\nअब ग्राहक को Installation Report WhatsApp पर भी भेजें?")
+                AlertDialog.Builder(this).setTitle(tr("Submit हो गया ✓", "Submitted ✓"))
+                    .setMessage(tr("Report Office को भेज दी गई और ग्राहक की AVIP Solar App में भी दिखेगी। Manager QC करेंगे।\n\nअब ग्राहक को Installation Report WhatsApp पर भी भेजें?", "The report has gone to the office and will also show in the customer's AVIP Solar app. The manager will do QC.\n\nSend the installation report to the customer on WhatsApp now?"))
                     .setCancelable(false)
-                    .setPositiveButton("WhatsApp पर भेजें") { _, _ ->
+                    .setPositiveButton(tr("WhatsApp पर भेजें", "Send on WhatsApp")) { _, _ ->
                         if (report != null) { ReportPdf.sendOnWhatsApp(this, site, report); finish() }
                         else ReportPdf.shareFor(this, site) { finish() }
                     }
-                    .setNegativeButton("बाद में") { _, _ -> finish() }
+                    .setNegativeButton(tr("बाद में", "Later")) { _, _ -> finish() }
                     .show()
             }
         }

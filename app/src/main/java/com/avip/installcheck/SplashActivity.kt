@@ -59,10 +59,10 @@ class SplashActivity : AppCompatActivity() {
                         } catch (_: Exception) {
                         }
                     }
-                    blockForUpdate("Installer नहीं खुल सका।")
+                    blockForUpdate(tr("Installer नहीं खुल सका।", "The installer could not open."))
                 }
                 PackageInstaller.STATUS_SUCCESS -> {}
-                else -> blockForUpdate("Update install नहीं हुआ।")
+                else -> blockForUpdate(tr("Update install नहीं हुआ।", "The update was not installed."))
             }
         }
     }
@@ -71,12 +71,13 @@ class SplashActivity : AppCompatActivity() {
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             val r = pendingRelease
             if (r != null && Updater.canInstall(this)) lifecycleScope.launch { downloadAndInstall(r) }
-            else if (r != null) blockForUpdate("AVIP Solar Installation को updates install करने की अनुमति दें, फिर Update now दबाएँ।")
+            else if (r != null) blockForUpdate(tr("AVIP Solar Installation को updates install करने की अनुमति दें, फिर Update now दबाएँ।", "Allow AVIP Solar Installation to install updates, then tap Update now."))
             else goNext()
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Lang.load(this)
         val root = vertical {
             gravity = Gravity.CENTER_HORIZONTAL
             setBackgroundColor(Ui.BRAND)
@@ -96,7 +97,7 @@ class SplashActivity : AppCompatActivity() {
         val brand = vertical {
             gravity = Gravity.CENTER_HORIZONTAL
             addView(text("AVIP Solar Installation", 26f, Color.WHITE, bold = true) { gravity = Gravity.CENTER }, lp(WRAP, WRAP))
-            addView(text("Site से Installation तक, हर काम का हिसाब", 14f, 0xDDFFFFFF.toInt()) { gravity = Gravity.CENTER }, lp(WRAP, WRAP).margins(context, t = 6))
+            addView(text(tr("Site से Installation तक, हर काम का हिसाब", "Every job, from site visit to installation"), 14f, 0xDDFFFFFF.toInt()) { gravity = Gravity.CENTER }, lp(WRAP, WRAP).margins(context, t = 6))
             addView(text("by AVIP Business Solutions LLP", 12f, Ui.SUN, bold = true) { gravity = Gravity.CENTER }, lp(WRAP, WRAP).margins(context, t = 4))
         }
         root.addView(brand)
@@ -108,7 +109,7 @@ class SplashActivity : AppCompatActivity() {
             max = 100
         }
         root.addView(progress, lp(dp(200), WRAP))
-        status = text("Updates check हो रहे हैं…", 13f, 0xDDFFFFFF.toInt()) { gravity = Gravity.CENTER }
+        status = text(tr("Updates check हो रहे हैं…", "Checking for updates…"), 13f, 0xDDFFFFFF.toInt()) { gravity = Gravity.CENTER }
         root.addView(status, lp(WRAP, WRAP).margins(this, t = 10))
         retry = pillButton("Retry", Ui.SUN, Ui.TEXT) { start() }.apply { visibility = View.GONE }
         root.addView(retry, lp(dp(160), WRAP).margins(this, t = 16))
@@ -126,7 +127,7 @@ class SplashActivity : AppCompatActivity() {
         val versionCode = Updater.currentVersionCode(this)
         val lastSeen = prefs.getLong("last_version_code", 0L)
         if (lastSeen in 1 until versionCode) {
-            Toast.makeText(this, "Version ${Updater.currentVersionName(this)} पर update हो गया", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, tr("Version ${Updater.currentVersionName(this)} पर update हो गया", "Updated to version ${Updater.currentVersionName(this)}"), Toast.LENGTH_LONG).show()
         }
         prefs.edit().putLong("last_version_code", versionCode).apply()
 
@@ -135,7 +136,7 @@ class SplashActivity : AppCompatActivity() {
 
     private fun start() {
         retry.visibility = View.GONE
-        status.text = "Updates check हो रहे हैं…"
+        status.text = tr("Updates check हो रहे हैं…", "Checking for updates…")
         progress.visibility = View.VISIBLE
         progress.isIndeterminate = true
 
@@ -157,7 +158,7 @@ class SplashActivity : AppCompatActivity() {
             minimum.await()
             if (!ready) {
                 progress.visibility = View.GONE
-                status.text = "Office server अभी set up नहीं है, या internet नहीं है।"
+                status.text = tr("Office server अभी set up नहीं है, या internet नहीं है।", "The office server is not set up yet, or there is no internet.")
                 retry.visibility = View.VISIBLE
                 return@launch
             }
@@ -171,32 +172,32 @@ class SplashActivity : AppCompatActivity() {
     }
 
     private suspend fun downloadAndInstall(release: ReleaseInfo) {
-        status.text = "Version ${release.versionName} download हो रहा है…"
+        status.text = tr("Version ${release.versionName} download हो रहा है…", "Downloading version ${release.versionName}…")
         progress.isIndeterminate = false
         progress.progress = 0
         val apk = withContext(Dispatchers.IO) {
             Updater.download(this@SplashActivity, release) { pct -> runOnUiThread { progress.progress = pct } }
         }
-        if (apk == null) { blockForUpdate("Download नहीं हुआ। Internet check करके फिर कोशिश करें।"); return }
-        status.text = "Update install हो रहा है…"
+        if (apk == null) { blockForUpdate(tr("Download नहीं हुआ। Internet check करके फिर कोशिश करें।", "Download failed. Check the internet and try again.")); return }
+        status.text = tr("Update install हो रहा है…", "Installing update…")
         try {
             withContext(Dispatchers.IO) { Updater.install(this@SplashActivity, apk) }
         } catch (_: Exception) {
-            blockForUpdate("Update install नहीं हो सका।")
+            blockForUpdate(tr("Update install नहीं हो सका।", "The update could not be installed."))
         }
     }
 
     private fun askInstallPermission(release: ReleaseInfo) {
         AlertDialog.Builder(this)
-            .setTitle("नया Version ज़रूरी है")
-            .setMessage("Version ${release.versionName} के बिना App नहीं खुलेगा। AVIP Solar Installation को अपने updates install करने की अनुमति दें? यह सिर्फ एक बार पूछा जाएगा।")
+            .setTitle(tr("नया Version ज़रूरी है", "New version required"))
+            .setMessage(tr("Version ${release.versionName} के बिना App नहीं खुलेगा। AVIP Solar Installation को अपने updates install करने की अनुमति दें? यह सिर्फ एक बार पूछा जाएगा।", "The app will not open without version ${release.versionName}. Allow AVIP Solar Installation to install its updates? This is asked only once."))
             .setCancelable(false)
             .setPositiveButton("Allow") { _, _ ->
                 unknownSourcesLauncher.launch(
                     Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName"))
                 )
             }
-            .setNegativeButton("अभी नहीं") { _, _ -> blockForUpdate("App चलाने के लिए यह update ज़रूरी है।") }
+            .setNegativeButton(tr("अभी नहीं", "Not now")) { _, _ -> blockForUpdate(tr("App चलाने के लिए यह update ज़रूरी है।", "This update is required to use the app.")) }
             .show()
     }
 
@@ -205,7 +206,7 @@ class SplashActivity : AppCompatActivity() {
         val r = pendingRelease ?: run { goNext(); return }
         if (isFinishing) return
         progress.visibility = View.GONE
-        status.text = "Update ज़रूरी है — Version ${r.versionName}\n$reason"
+        status.text = tr("Update ज़रूरी है — Version ${r.versionName}\n$reason", "Update required: version ${r.versionName}\n$reason")
         retry.visibility = View.GONE
         updateBox?.let { (it.parent as? ViewGroup)?.removeView(it) }
         val box = vertical {
@@ -217,7 +218,7 @@ class SplashActivity : AppCompatActivity() {
                     downloadAndInstall(r)
                 } else askInstallPermission(r)
             }, lp(dp(200), WRAP))
-            addView(text("Website से Download करें", 13f, Color.WHITE, bold = true) {
+            addView(text(tr("Website से Download करें", "Download from the website"), 13f, Color.WHITE, bold = true) {
                 setPadding(dp(10), dp(12), dp(10), dp(6))
                 setOnClickListener {
                     try {

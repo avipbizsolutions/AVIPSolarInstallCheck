@@ -299,3 +299,37 @@ fun Context.tag(label: String, bg: Int, fg: Int = Color.WHITE): TextView = text(
     setPadding(dp(8), dp(3), dp(8), dp(3))
     letterSpacing = 0.05f
 }
+/**
+ * Screen language: Hindi-English (default) or English. Chosen on the login and home
+ * screens and remembered on the phone.
+ */
+object Lang {
+    @Volatile var english = false
+        private set
+
+    fun load(c: Context) {
+        english = c.getSharedPreferences("settings", Context.MODE_PRIVATE).getBoolean("english", false)
+    }
+
+    fun set(c: Context, on: Boolean) {
+        c.getSharedPreferences("settings", Context.MODE_PRIVATE).edit().putBoolean("english", on).apply()
+        english = on
+    }
+}
+
+/** Text in the chosen language: [hi] is the Hindi-English wording, [en] the English one. */
+fun tr(hi: String, en: String): String = if (Lang.english) en else hi
+
+/** Small pill that switches between Hindi-English and English, then redraws the screen. */
+fun Activity.langToggle(onDark: Boolean = true): View = text(if (Lang.english) "हिंदी" else "English", 13f,
+    if (onDark) Color.WHITE else Ui.TEXT, bold = true) {
+    gravity = Gravity.CENTER
+    minHeight = dp(36)
+    setPadding(dp(12), dp(6), dp(12), dp(6))
+    background = rounded(Color.TRANSPARENT, dpf(18f), if (onDark) 0x99FFFFFF.toInt() else Ui.LINE, dp(1))
+    contentDescription = if (Lang.english) "Switch to Hindi-English" else "Switch to English"
+    setOnClickListener {
+        Lang.set(this@langToggle, !Lang.english)
+        recreate()
+    }
+}

@@ -23,6 +23,7 @@ class SiteActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Lang.load(this)
         siteId = intent.getStringExtra(EXTRA_ID) ?: run { finish(); return }
         user = Session.user(this) ?: run { finish(); return }
     }
@@ -53,7 +54,7 @@ class SiteActivity : AppCompatActivity() {
                 else -> ""
             }
             if (remark.isNotBlank()) addView(note(remark, Ui.DANGER_LIGHT, Ui.DANGER), lp().margins(context, t = 10))
-            if (s.fromSalesApp) addView(note("AVIP Solar Sales से आया · Visit ${s.s("Sales Visit No.")}" +
+            if (s.fromSalesApp) addView(note(tr("AVIP Solar Sales से आया · Visit ${s.s("Sales Visit No.")}", "From AVIP Solar Sales · Visit ${s.s(\"Sales Visit No.\")}") +
                 (if (s.s("Quoted System").isNotBlank()) "\nQuoted: ${s.s("Quoted System")}" else ""),
                 Ui.GREEN_LIGHT, 0xFF145E39.toInt()), lp().margins(context, t = 10))
         }, lp().margins(this, b = 12))
@@ -61,16 +62,16 @@ class SiteActivity : AppCompatActivity() {
         // ---- customer & location
         val canEditSite = (user.isSales && (st == Status.DRAFT || st == Status.SENT_BACK)) || user.isManager
         body.addView(section("Customer & Site", null) {
-            if (canEditSite) addView(linkRow("Customer / Location बदलें", R.drawable.ic_edit) {
+            if (canEditSite) addView(linkRow(tr("Customer / Location बदलें", "Edit customer / location"), R.drawable.ic_edit) {
                 startActivity(Intent(this@SiteActivity, SiteFormActivity::class.java).putExtra(EXTRA_ID, s.id))
             })
             addView(actionRow("Mobile", s.mobile.ifBlank { "—" }, R.drawable.ic_call) { call(s.mobile) })
             val wa = s.s("WhatsApp")
             if (wa.isNotBlank() && wa != s.mobile) addView(kv("WhatsApp", wa))
             addView(actionRow("Address", listOf(s.address, s.district).filter { it.isNotBlank() }.joinToString(", ").ifBlank { "—" }, R.drawable.ic_location) {
-                if (s.mapsUrl().isBlank()) toast("Map location नहीं लगी है") else openUrl(s.mapsUrl())
+                if (s.mapsUrl().isBlank()) toast(tr("Map location नहीं लगी है", "Map location not set")) else openUrl(s.mapsUrl())
             })
-            if (s.mapsUrl().isBlank()) addView(note("Google Map location नहीं लगी है", Ui.DANGER_LIGHT, Ui.DANGER))
+            if (s.mapsUrl().isBlank()) addView(note(tr("Google Map location नहीं लगी है", "Google Map location not set"), Ui.DANGER_LIGHT, Ui.DANGER))
             addView(kv("PM Surya Ghar App No.", s.s("PM Surya Ghar App No.").ifBlank { "—" }))
             addView(kv("DISCOM · CA No.", listOf(s.s("DISCOM"), s.s("CA No.")).filter { it.isNotBlank() }.joinToString(" · ").ifBlank { "—" }))
             addView(kv("Sales", s.salesPerson))
@@ -92,8 +93,8 @@ class SiteActivity : AppCompatActivity() {
         // ---- materials
         val mats = s.materials
         val canEditMaterials = (user.isSales && (st == Status.DRAFT || st == Status.SENT_BACK)) || (user.isManager && Status.step(st) <= 2)
-        body.addView(section("Material List", if (mats.isEmpty()) "अभी कोई material नहीं" else "${mats.count { qtyNeeded(it) > 0 }} items") {
-            if (canEditMaterials) addView(linkRow(if (mats.isEmpty()) "Material List बनाएँ" else "Material List बदलें", R.drawable.ic_edit) {
+        body.addView(section("Material List", if (mats.isEmpty()) tr("अभी कोई material नहीं", "No material yet") else "${mats.count { qtyNeeded(it) > 0 }} items") {
+            if (canEditMaterials) addView(linkRow(if (mats.isEmpty()) tr("Material List बनाएँ", "Make material list") else tr("Material List बदलें", "Edit material list"), R.drawable.ic_edit) {
                 startActivity(Intent(this@SiteActivity, MaterialsActivity::class.java).putExtra(EXTRA_ID, s.id)
                     .putExtra(MaterialsActivity.EXTRA_MODE, if (user.isManager) MaterialsActivity.MODE_MANAGER else MaterialsActivity.MODE_SALES))
             })
@@ -109,7 +110,7 @@ class SiteActivity : AppCompatActivity() {
                         addView(text(r.optString("Serial No."), 14.5f, Ui.TEXT, bold = true))
                         addView(text(r.optString("Item Type"), 12.5f, Ui.MUTED))
                     }, lp(0, WRAP, 1f))
-                    if (matched) addView(pill("Site पर मिला ✓", Ui.GREEN_LIGHT, 0xFF145E39.toInt()))
+                    if (matched) addView(pill(tr("Site पर मिला ✓", "Matched at site ✓"), Ui.GREEN_LIGHT, 0xFF145E39.toInt()))
                     val link = r.optString("Label Photo Link")
                     if (link.isNotBlank()) addView(icon(R.drawable.ic_camera, Ui.BRAND, 22).apply {
                         setPadding(dp(4), dp(4), dp(4), dp(4)); setOnClickListener { openUrl(link) }
@@ -136,7 +137,7 @@ class SiteActivity : AppCompatActivity() {
                         Ui.DANGER_LIGHT, Ui.DANGER), lp().margins(context, t = 8))
                 }
                 s.pending.filter { it.optString("Status") == "Open" }.forEach { p ->
-                    addView(note("बाकी: ${p.optString("Pending Item")}" +
+                    addView(note(tr("बाकी: ${p.optString("Pending Item")}", "Pending: ${p.optString(\"Pending Item\")}") +
                         (if (p.optString("Reason").isNotBlank()) " · ${p.optString("Reason")}" else "") +
                         (if (p.optString("Expected Date").isNotBlank()) " · ${Fmt.date(p.optString("Expected Date"))}" else ""),
                         Ui.SUN_LIGHT, 0xFF4A3300.toInt()), lp().margins(context, t = 8))
@@ -149,13 +150,13 @@ class SiteActivity : AppCompatActivity() {
                     if (so.optString("Report PDF Link").isNotBlank()) addView(linkRow("Installation Report (PDF)", R.drawable.ic_pdf) { openUrl(so.optString("Report PDF Link")) })
                 }
                 if (s.photos.isNotEmpty() && (user.isManager || user.isInstaller)) {
-                    addView(linkRow("सभी Photos Drive में देखें", R.drawable.ic_camera) { showPhotos(s) })
+                    addView(linkRow(tr("सभी Photos Drive में देखें", "See all photos in Drive"), R.drawable.ic_camera) { showPhotos(s) })
                 }
             })
         }
 
         Uploads.errors(this, s.id).takeIf { it.isNotEmpty() }?.let { errs ->
-            body.addView(note("Upload में दिक्कत:\n" + errs.take(5).joinToString("\n"), Ui.DANGER_LIGHT, Ui.DANGER))
+            body.addView(note(tr("Upload में दिक्कत:\n", "Upload problem:\n") + errs.take(5).joinToString("\n"), Ui.DANGER_LIGHT, Ui.DANGER))
         }
 
         // ---- next step for this team
@@ -171,10 +172,10 @@ class SiteActivity : AppCompatActivity() {
     private fun materialTable(mats: List<JSONObject>, showDispatch: Boolean): View = vertical {
         addView(horizontal {
             addView(text("Item", 12f, Ui.MUTED, bold = true), lp(0, WRAP, 1f))
-            addView(text("माँगा", 12f, Ui.MUTED, bold = true) { gravity = Gravity.END }, lp(dp(54), WRAP))
+            addView(text(tr("माँगा", "Requested"), 12f, Ui.MUTED, bold = true) { gravity = Gravity.END }, lp(dp(54), WRAP))
             if (showDispatch) {
-                addView(text("भेजा", 12f, Ui.MUTED, bold = true) { gravity = Gravity.END }, lp(dp(50), WRAP))
-                addView(text("बाकी", 12f, Ui.MUTED, bold = true) { gravity = Gravity.END }, lp(dp(46), WRAP))
+                addView(text(tr("भेजा", "Sent"), 12f, Ui.MUTED, bold = true) { gravity = Gravity.END }, lp(dp(50), WRAP))
+                addView(text(tr("बाकी", "Pending"), 12f, Ui.MUTED, bold = true) { gravity = Gravity.END }, lp(dp(46), WRAP))
             }
         }, lp().margins(context, b = 4))
         mats.filter { qtyNeeded(it) > 0 || it.optDouble("Qty Dispatched", 0.0) > 0 }.forEach { m ->
@@ -240,27 +241,27 @@ class SiteActivity : AppCompatActivity() {
         fun add(v: View) = box.addView(v, lp().margins(this, b = 8))
 
         if ((user.isSales || user.isManager) && (st == Status.DRAFT || st == Status.SENT_BACK)) {
-            add(pillButton("Manager को Verify भेजें", Ui.GREEN, Color.WHITE, heightDp = 54) { submitToManager(s) })
+            add(pillButton(tr("Manager को Verify भेजें", "Send to manager to verify"), Ui.GREEN, Color.WHITE, heightDp = 54) { submitToManager(s) })
         }
         if (user.isManager && st == Status.SUBMITTED) {
-            add(pillButton("Verify करें", Ui.SUN, Ui.TEXT, heightDp = 54) {
+            add(pillButton(tr("Verify करें", "Verify"), Ui.SUN, Ui.TEXT, heightDp = 54) {
                 startActivity(Intent(this, VerifyActivity::class.java).putExtra(EXTRA_ID, s.id))
             })
         }
         val dispatchOpen = st == Status.APPROVED || (Status.step(st) == 3 && s.balanceTotal() > 0)
         if ((user.isDispatch || user.isManager) && dispatchOpen) {
-            add(pillButton(if (st == Status.APPROVED) "Dispatch शुरू करें" else "Balance Dispatch करें", Ui.TEAL, Color.WHITE, heightDp = 54) {
+            add(pillButton(if (st == Status.APPROVED) tr("Dispatch शुरू करें", "Start dispatch") else tr("Balance Dispatch करें", "Dispatch balance"), Ui.TEAL, Color.WHITE, heightDp = 54) {
                 startActivity(Intent(this, DispatchActivity::class.java).putExtra(EXTRA_ID, s.id))
             })
         }
         if ((user.isInstaller || user.isManager) && st in listOf(Status.DISPATCHED, Status.BALANCE, Status.IN_PROGRESS, Status.REWORK)) {
-            add(pillButton(if (st == Status.IN_PROGRESS || st == Status.REWORK) "Installation Checklist जारी रखें" else "Installation शुरू करें",
+            add(pillButton(if (st == Status.IN_PROGRESS || st == Status.REWORK) tr("Installation Checklist जारी रखें", "Continue installation checklist") else tr("Installation शुरू करें", "Start installation"),
                 Ui.SUN, Ui.TEXT, heightDp = 54) {
                 startActivity(Intent(this, InstallActivity::class.java).putExtra(EXTRA_ID, s.id))
             })
         }
         if ((user.isInstaller || user.isManager) && (st == Status.INSTALL_SUBMITTED || st == Status.CLOSED)) {
-            add(pillButton("Customer Report WhatsApp पर भेजें", Ui.GREEN, Color.WHITE, heightDp = 50) {
+            add(pillButton(tr("Customer Report WhatsApp पर भेजें", "Send customer report on WhatsApp"), Ui.GREEN, Color.WHITE, heightDp = 50) {
                 ReportPdf.shareFor(this, s)
             })
         }
@@ -274,39 +275,39 @@ class SiteActivity : AppCompatActivity() {
 
     private fun submitToManager(s: Site) {
         if (s.materials.none { qtyNeeded(it) > 0 }) {
-            toast("पहले Material List भरें")
+            toast(tr("पहले Material List भरें", "Fill in the material list first"))
             startActivity(Intent(this, MaterialsActivity::class.java).putExtra(EXTRA_ID, s.id)
                 .putExtra(MaterialsActivity.EXTRA_MODE, if (user.isManager) MaterialsActivity.MODE_MANAGER else MaterialsActivity.MODE_SALES))
             return
         }
-        if (s.mapsUrl().isBlank()) { toast("पहले Google Map location लगाएँ"); return }
-        confirm("Manager को भेजें?", "Site details और Material List Manager के पास Verify के लिए जाएगी। उसके बाद आप बदल नहीं सकेंगे।", "भेजें") {
-            busy("भेजा जा रहा है…", {
+        if (s.mapsUrl().isBlank()) { toast(tr("पहले Google Map location लगाएँ", "Set the Google Map location first")); return }
+        confirm(tr("Manager को भेजें?", "Send to manager?"), tr("Site details और Material List Manager के पास Verify के लिए जाएगी। उसके बाद आप बदल नहीं सकेंगे।", "Site details and the material list go to the manager to verify. After that you cannot change them."), tr("भेजें", "Send")) {
+            busy(tr("भेजा जा रहा है…", "Sending…"), {
                 Api.call(this, "saveSite", JSONObject().put("site", JSONObject().put("Site ID", s.id)).put("submit", true))
                 Sites.reload(this)
-            }) { toast("Manager को भेज दिया"); render() }
+            }) { toast(tr("Manager को भेज दिया", "Sent to manager")); render() }
         }
     }
 
     private fun qc(s: Site, approve: Boolean) {
-        val remarks = input(if (approve) "Remark (optional)" else "क्या ठीक करना है? (ज़रूरी)")
-        val portal = CheckBox(this).apply { text = "PM Surya Ghar portal पर upload हो गया"; textSize = 14f }
+        val remarks = input(if (approve) "Remark (optional)" else tr("क्या ठीक करना है? (ज़रूरी)", "What needs fixing? (required)"))
+        val portal = CheckBox(this).apply { text = tr("PM Surya Ghar portal पर upload हो गया", "Uploaded on the PM Surya Ghar portal"); textSize = 14f }
         val box = vertical(16) {
             addView(remarks, lp())
             if (approve) addView(portal, lp().margins(context, t = 8))
         }
-        val d = AlertDialog.Builder(this).setTitle(if (approve) "QC Approve करें?" else "Rework के लिए वापस भेजें")
-            .setView(box).setPositiveButton(if (approve) "Approve" else "Rework भेजें", null).setNegativeButton("Cancel", null).create()
+        val d = AlertDialog.Builder(this).setTitle(if (approve) tr("QC Approve करें?", "Approve QC?") else tr("Rework के लिए वापस भेजें", "Send back for rework"))
+            .setView(box).setPositiveButton(if (approve) "Approve" else tr("Rework भेजें", "Send for rework"), null).setNegativeButton("Cancel", null).create()
         d.setOnShowListener {
             d.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val r = remarks.text.toString().trim()
-                if (!approve && r.isBlank()) { remarks.error = "ज़रूरी है"; return@setOnClickListener }
+                if (!approve && r.isBlank()) { remarks.error = tr("ज़रूरी है", "Required"); return@setOnClickListener }
                 d.dismiss()
-                busy("Save हो रहा है…", {
+                busy(tr("Save हो रहा है…", "Saving…"), {
                     Api.call(this, "qc", JSONObject().put("siteId", s.id).put("result", if (approve) "Approved" else "Rework")
                         .put("remarks", r).put("portalDone", portal.isChecked))
                     Sites.reload(this)
-                }) { toast(if (approve) "QC Approved · Site closed" else "Rework के लिए भेजा"); render() }
+                }) { toast(if (approve) "QC Approved · Site closed" else tr("Rework के लिए भेजा", "Sent for rework")); render() }
             }
         }
         d.show()

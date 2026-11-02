@@ -21,15 +21,15 @@ object Status {
     const val REWORK = "Rework"
     const val CLOSED = "QC Approved (Closed)"
 
-    /** Short Hindi-English label for cards. */
+    /** Short label for cards, in the chosen language. */
     fun label(s: String) = when (s) {
         DRAFT -> "Draft"
-        SUBMITTED -> "Verify में"
-        SENT_BACK -> "वापस आई"
-        APPROVED -> "Dispatch के लिए"
-        DISPATCHED -> "Dispatch हुआ"
-        BALANCE -> "Balance बाकी"
-        IN_PROGRESS -> "Installation चल रहा"
+        SUBMITTED -> tr("Verify में", "Awaiting verification")
+        SENT_BACK -> tr("वापस आई", "Sent back")
+        APPROVED -> tr("Dispatch के लिए", "Ready for dispatch")
+        DISPATCHED -> tr("Dispatch हुआ", "Dispatched")
+        BALANCE -> tr("Balance बाकी", "Balance pending")
+        IN_PROGRESS -> tr("Installation चल रहा", "Installation in progress")
         INSTALL_SUBMITTED -> "QC Review"
         REWORK -> "Rework"
         CLOSED -> "Closed ✓"
@@ -123,7 +123,7 @@ class Site(val o: JSONObject) {
 
     val id get() = s("Site ID")
     val status get() = s("Status")
-    val customer get() = s("Customer Name").ifBlank { "(नाम नहीं)" }
+    val customer get() = s("Customer Name").ifBlank { tr("(नाम नहीं)", "(no name)") }
     val mobile get() = s("Mobile")
     val address get() = s("Address")
     val district get() = s("District")

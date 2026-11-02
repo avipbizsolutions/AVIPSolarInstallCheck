@@ -111,13 +111,13 @@ class MaterialEditor(private val a: Activity, private val lines: List<MatLine>, 
         val info = a.vertical {
             addView(a.text(l.item, 14.5f, Ui.TEXT, bold = true))
             val sub = listOf(l.make, l.unit).filter { it.isNotBlank() }.joinToString(" · ") +
-                (l.reference?.let { r -> if (mode == MaterialsActivity.MODE_DISPATCH) " · माँगा ${Fmt.qty(r)}" else if (r > 0 && Fmt.qty(r) != Fmt.qty(l.qty)) " · Sales: ${Fmt.qty(r)}" else "" } ?: "")
+                (l.reference?.let { r -> if (mode == MaterialsActivity.MODE_DISPATCH) tr(" · माँगा ${Fmt.qty(r)}", " · requested ${Fmt.qty(r)}") else if (r > 0 && Fmt.qty(r) != Fmt.qty(l.qty)) " · Sales: ${Fmt.qty(r)}" else "" } ?: "")
             val subView = a.text(sub, 12.5f, Ui.MUTED)
             addView(subView)
             if (mode != MaterialsActivity.MODE_DISPATCH) {
                 isClickable = true
                 setOnClickListener {
-                    a.askText("Make / Size: ${l.item}", "जैसे Microtek 540 Wp", l.make, required = false) { v ->
+                    a.askText("Make / Size: ${l.item}", tr("जैसे Microtek 540 Wp", "e.g. Microtek 540 Wp"), l.make, required = false) { v ->
                         l.make = v
                         subView.text = listOf(l.make, l.unit).filter { it.isNotBlank() }.joinToString(" · ")
                     }
@@ -167,21 +167,22 @@ class MaterialsActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Lang.load(this)
         site = Sites.byId(intent.getStringExtra(SiteActivity.EXTRA_ID)) ?: run { finish(); return }
         mode = intent.getStringExtra(EXTRA_MODE) ?: MODE_SALES
-        if (!Ref.isLoaded) { toast("BOM list load नहीं हुई। Internet check करें।"); finish(); return }
+        if (!Ref.isLoaded) { toast(tr("BOM list load नहीं हुई। Internet check करें।", "BOM list did not load. Check the internet.")); finish(); return }
         lines = Materials.lines(site, mode)
 
-        val save = pillButton("Save करें", Ui.SUN, Ui.TEXT, heightDp = 54) { save() }
+        val save = pillButton(tr("Save करें", "Save"), Ui.SUN, Ui.TEXT, heightDp = 54) { save() }
         val body = screen("Material List (BOM)", "${site.customer} · ${site.subtitle}", bottom = save)
         body.addView(note(if (mode == MODE_MANAGER)
-            "Manager: यहाँ बदली Qty \"Approved\" मानी जाएगी और Dispatch इसी से होगा।"
-        else "Default Qty (हर site के लिए) पहले से भरी है। Site के हिसाब से बदलें। Item पर दबाकर Make / Size लिखें।",
+            tr("Manager: यहाँ बदली Qty \"Approved\" मानी जाएगी और Dispatch इसी से होगा।", "Manager: quantities changed here count as \"Approved\" and dispatch follows them.")
+        else tr("Default Qty (हर site के लिए) पहले से भरी है। Site के हिसाब से बदलें। Item पर दबाकर Make / Size लिखें।", "Default quantities (per site) are filled in. Change them for this site. Tap an item to write make / size."),
             Ui.SUN_LIGHT, 0xFF4A3300.toInt()))
         body.addView(MaterialEditor(this, lines, mode).view())
         if (mode == MODE_SALES) {
-            body.addView(text("Manager / Dispatch के लिए Note", 13f, Ui.MUTED, bold = true), lp().margins(this, t = 6, b = 6))
-            noteInput = input("जैसे: छत तीसरी मंज़िल पर, लंबा DC cable लगेगा", InputType.TYPE_CLASS_TEXT, site.s("Sales Note"))
+            body.addView(text(tr("Manager / Dispatch के लिए Note", "Note for manager / dispatch"), 13f, Ui.MUTED, bold = true), lp().margins(this, t = 6, b = 6))
+            noteInput = input(tr("जैसे: छत तीसरी मंज़िल पर, लंबा DC cable लगेगा", "e.g. roof on 3rd floor, long DC cable needed"), InputType.TYPE_CLASS_TEXT, site.s("Sales Note"))
             body.addView(noteInput, lp())
         }
     }
@@ -191,9 +192,9 @@ class MaterialsActivity : AppCompatActivity() {
         if (mode == MODE_SALES && ::noteInput.isInitialized) siteJson.put("Sales Note", noteInput.text.toString().trim())
         val body = JSONObject().put("site", siteJson).put("materials", Materials.toJson(lines))
         if (mode == MODE_SALES) body.put("asSales", true)
-        busy("Save हो रहा है…", {
+        busy(tr("Save हो रहा है…", "Saving…"), {
             Api.call(this, "saveSite", body)
             Sites.reload(this)
-        }) { toast("Material List save हो गई"); finish() }
+        }) { toast(tr("Material List save हो गई", "Material list saved")); finish() }
     }
 }

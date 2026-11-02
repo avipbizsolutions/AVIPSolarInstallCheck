@@ -23,6 +23,7 @@ class SignActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Lang.load(this)
         file = File(intent.getStringExtra(EXTRA_FILE) ?: run { finish(); return })
         val name = intent.getStringExtra(EXTRA_NAME).orEmpty()
         val root = horizontal { setBackgroundColor(Ui.BG); gravity = Gravity.TOP }
@@ -40,7 +41,7 @@ class SignActivity : AppCompatActivity() {
             setPadding(dp(8), dp(10), dp(10), dp(10))
             addView(text(intent.getStringExtra(EXTRA_TITLE) ?: "Signature", 14f, Ui.TEXT, bold = true) { gravity = Gravity.CENTER })
             if (name.isNotBlank()) addView(text(name, 12f, Ui.MUTED) { gravity = Gravity.CENTER }, lp().margins(context, t = 2))
-            addView(text("सफेद जगह पर उंगली से Sign करें", 11f, Ui.MUTED) { gravity = Gravity.CENTER }, lp().margins(context, t = 6, b = 12))
+            addView(text(tr("सफेद जगह पर उंगली से Sign करें", "Sign with your finger in the white area"), 11f, Ui.MUTED) { gravity = Gravity.CENTER }, lp().margins(context, t = 6, b = 12))
             addView(tool("Undo", R.drawable.ic_back, Ui.BRAND) { pad.undo() })
             addView(tool("Clear", R.drawable.ic_delete, Ui.DANGER) { pad.clear() })
             addView(View(context), lp(MATCH, 0, 1f))

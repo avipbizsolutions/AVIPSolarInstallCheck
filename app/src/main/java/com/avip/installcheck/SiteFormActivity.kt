@@ -31,11 +31,12 @@ class SiteFormActivity : AppCompatActivity() {
     private var listener: LocationListener? = null
 
     private val perm = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-        if (hasLocation()) takeLocation() else toast("Location की अनुमति चाहिए")
+        if (hasLocation()) takeLocation() else toast(tr("Location की अनुमति चाहिए", "Location permission is needed"))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Lang.load(this)
         user = Session.user(this) ?: run { finish(); return }
         site = Sites.byId(intent.getStringExtra(SiteActivity.EXTRA_ID))
         lm = getSystemService(LOCATION_SERVICE) as LocationManager
@@ -59,43 +60,43 @@ class SiteFormActivity : AppCompatActivity() {
     }
 
     private fun build() {
-        val save = pillButton(if (site == null) "Save करें, अगला: Material List →" else "Save करें", Ui.SUN, Ui.TEXT, heightDp = 54) { save() }
-        val body = screen(if (site == null) "नई Site जोड़ें" else "Customer & Site", site?.id, bottom = save)
+        val save = pillButton(if (site == null) tr("Save करें, अगला: Material List →", "Save, next: material list →") else tr("Save करें", "Save"), Ui.SUN, Ui.TEXT, heightDp = 54) { save() }
+        val body = screen(if (site == null) tr("नई Site जोड़ें", "Add new site") else "Customer & Site", site?.id, bottom = save)
 
         body.addView(section("Customer") {
-            fieldTo(this, "Customer का नाम *", "Customer Name", "पूरा नाम (बिजली बिल के अनुसार)")
-            fieldTo(this, "Mobile Number *", "Mobile", "10 अंकों का number", InputType.TYPE_CLASS_PHONE)
-            fieldTo(this, "WhatsApp Number", "WhatsApp", "खाली छोड़ें अगर यही number है", InputType.TYPE_CLASS_PHONE)
-            fieldTo(this, "पूरा पता *", "Address", "मकान, गली, मोहल्ला, थाना", InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE)
-            fieldTo(this, "ज़िला", "District", "जैसे Patna")
+            fieldTo(this, tr("Customer का नाम *", "Customer name *"), "Customer Name", tr("पूरा नाम (बिजली बिल के अनुसार)", "Full name (as on the electricity bill)"))
+            fieldTo(this, "Mobile Number *", "Mobile", tr("10 अंकों का number", "10-digit number"), InputType.TYPE_CLASS_PHONE)
+            fieldTo(this, "WhatsApp Number", "WhatsApp", tr("खाली छोड़ें अगर यही number है", "Leave blank if it is the same number"), InputType.TYPE_CLASS_PHONE)
+            fieldTo(this, tr("पूरा पता *", "Full address *"), "Address", tr("मकान, गली, मोहल्ला, थाना", "House, street, locality, police station"), InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE)
+            fieldTo(this, tr("ज़िला", "District"), "District", tr("जैसे Patna", "e.g. Patna"))
         })
 
-        body.addView(section("Google Map Location *", "Installation team इसी location पर navigation करेगी") {
+        body.addView(section("Google Map Location *", tr("Installation team इसी location पर navigation करेगी", "The installation team will navigate to this location")) {
             locText = text(locationLabel(), 14.5f, Ui.TEXT) {
                 background = rounded(Ui.BRAND_LIGHT, dpf(12f))
                 setPadding(dp(12), dp(10), dp(12), dp(10))
             }
             addView(locText, lp())
-            addView(pillButton("Site पर हूँ, Location लें", Ui.BRAND, android.graphics.Color.WHITE, iconRes = R.drawable.ic_location) {
+            addView(pillButton(tr("Site पर हूँ, Location लें", "I'm at the site, take location"), Ui.BRAND, android.graphics.Color.WHITE, iconRes = R.drawable.ic_location) {
                 if (hasLocation()) takeLocation() else perm.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
             }, lp().margins(context, t = 10))
-            addView(pillButton("Google Map Link Paste करें", android.graphics.Color.WHITE, Ui.TEXT) { pasteLink() }.apply {
+            addView(pillButton(tr("Google Map Link Paste करें", "Paste Google Map link"), android.graphics.Color.WHITE, Ui.TEXT) { pasteLink() }.apply {
                 background = rounded(android.graphics.Color.WHITE, dpf(25f), 0xFFB9C5D0.toInt(), dp(1))
             }, lp().margins(context, t = 8))
-            if (values["Latitude"]!!.isNotBlank()) addView(text("Map में देखें ›", 14f, Ui.BRAND, bold = true) {
+            if (values["Latitude"]!!.isNotBlank()) addView(text(tr("Map में देखें ›", "View on map ›"), 14f, Ui.BRAND, bold = true) {
                 setPadding(0, dp(10), 0, 0)
                 setOnClickListener { openUrl(mapUrl()) }
             })
         })
 
         body.addView(section("System & PM Surya Ghar") {
-            fieldTo(this, "Site Size (kW) *", "Site Size (kW)", "जैसे 3", InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL)
+            fieldTo(this, "Site Size (kW) *", "Site Size (kW)", tr("जैसे 3", "e.g. 3"), InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL)
             addView(text("System Type", 13f, Ui.MUTED, bold = true), lp().margins(context, t = 12, b = 6))
             addView(chips(listOf("On-grid", "Hybrid", "Off-grid"), values["System Type"] ?: "") { values["System Type"] = it })
             fieldTo(this, "PM Surya Ghar App No.", "PM Surya Ghar App No.", "Portal application number")
             addView(text("DISCOM", 13f, Ui.MUTED, bold = true), lp().margins(context, t = 12, b = 6))
             addView(chips(listOf("NBPDCL", "SBPDCL"), values["DISCOM"] ?: "") { values["DISCOM"] = it })
-            fieldTo(this, "CA No. (Consumer No.)", "CA No.", "बिजली बिल पर")
+            fieldTo(this, "CA No. (Consumer No.)", "CA No.", tr("बिजली बिल पर", "On the electricity bill"))
             fieldTo(this, "Site Survey by", "Survey By", "")
             addView(text("Survey Date", 13f, Ui.MUTED, bold = true), lp().margins(context, t = 12, b = 6))
             val dateView = text(Fmt.date(values["Survey Date"] ?: ""), 16f, Ui.TEXT) {
@@ -108,7 +109,7 @@ class SiteFormActivity : AppCompatActivity() {
                 addView(text("Sales Person", 13f, Ui.MUTED, bold = true), lp().margins(context, t = 12, b = 6))
                 addView(chips(Ref.salesPeople, values["Sales Person"] ?: "") { values["Sales Person"] = it })
             }
-            fieldTo(this, "Manager / Dispatch के लिए Note", "Sales Note", "जैसे: छत तीसरी मंज़िल पर, लंबा DC cable लगेगा")
+            fieldTo(this, tr("Manager / Dispatch के लिए Note", "Note for manager / dispatch"), "Sales Note", tr("जैसे: छत तीसरी मंज़िल पर, लंबा DC cable लगेगा", "e.g. roof on 3rd floor, long DC cable needed"))
         })
     }
 
@@ -119,9 +120,9 @@ class SiteFormActivity : AppCompatActivity() {
         val la = values["Latitude"] ?: ""
         val ln = values["Longitude"] ?: ""
         return when {
-            la.isNotBlank() && ln.isNotBlank() -> "✓ Pin लगा: $la, $ln"
+            la.isNotBlank() && ln.isNotBlank() -> tr("✓ Pin लगा: $la, $ln", "✓ Pin set: $la, $ln")
             (values["Google Map Link"] ?: "").isNotBlank() -> "✓ Map link: ${values["Google Map Link"]}"
-            else -> "अभी Location नहीं लगी है"
+            else -> tr("अभी Location नहीं लगी है", "Location not set yet")
         }
     }
 
@@ -136,8 +137,8 @@ class SiteFormActivity : AppCompatActivity() {
     private fun takeLocation() {
         val providers = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)
             .filter { runCatching { lm.isProviderEnabled(it) }.getOrDefault(false) }
-        if (providers.isEmpty()) { toast("Phone की Location (GPS) चालू करें"); return }
-        locText.text = "Location ली जा रही है… (छत पर / खुले में खड़े हों)"
+        if (providers.isEmpty()) { toast(tr("Phone की Location (GPS) चालू करें", "Turn on the phone's location (GPS)")); return }
+        locText.text = tr("Location ली जा रही है… (छत पर / खुले में खड़े हों)", "Getting location… (stand on the roof or in the open)")
         stopLocation()
         var best: Location? = null
         val l = object : LocationListener {
@@ -175,7 +176,7 @@ class SiteFormActivity : AppCompatActivity() {
     private fun pasteLink() {
         val clip = (getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager).primaryClip
         val fromClip = if (clip != null && clip.itemCount > 0) clip.getItemAt(0).coerceToText(this).toString() else ""
-        askText("Google Map Link", "maps.google.com/… या maps.app.goo.gl/…", fromClip.takeIf { it.contains("map", true) || it.contains("goo.gl") } ?: "") { link ->
+        askText("Google Map Link", tr("maps.google.com/… या maps.app.goo.gl/…", "maps.google.com/… or maps.app.goo.gl/…"), fromClip.takeIf { it.contains("map", true) || it.contains("goo.gl") } ?: "") { link ->
             val m = Regex("(-?\\d{1,2}\\.\\d+)\\s*,\\s*(-?\\d{1,3}\\.\\d+)").find(link)
             if (m != null) {
                 values["Latitude"] = m.groupValues[1]
@@ -191,11 +192,11 @@ class SiteFormActivity : AppCompatActivity() {
 
     private fun save() {
         val err = when {
-            values["Customer Name"].isNullOrBlank() -> "Customer का नाम भरें"
-            (values["Mobile"] ?: "").filter { it.isDigit() }.length < 10 -> "10 अंकों का Mobile number भरें"
-            values["Address"].isNullOrBlank() -> "पता भरें"
-            values["Latitude"].isNullOrBlank() && values["Google Map Link"].isNullOrBlank() -> "Google Map location लगाएँ"
-            values["Site Size (kW)"].isNullOrBlank() -> "Site Size (kW) भरें"
+            values["Customer Name"].isNullOrBlank() -> tr("Customer का नाम भरें", "Enter the customer name")
+            (values["Mobile"] ?: "").filter { it.isDigit() }.length < 10 -> tr("10 अंकों का Mobile number भरें", "Enter a 10-digit mobile number")
+            values["Address"].isNullOrBlank() -> tr("पता भरें", "Enter the address")
+            values["Latitude"].isNullOrBlank() && values["Google Map Link"].isNullOrBlank() -> tr("Google Map location लगाएँ", "Set the Google Map location")
+            values["Site Size (kW)"].isNullOrBlank() -> tr("Site Size (kW) भरें", "Enter the site size (kW)")
             else -> null
         }
         if (err != null) { AlertDialog.Builder(this).setMessage(err).setPositiveButton("OK", null).show(); return }
@@ -217,12 +218,12 @@ class SiteFormActivity : AppCompatActivity() {
             }
             body.put("materials", mats).put("asSales", true)
         }
-        busy("Save हो रहा है…", {
+        busy(tr("Save हो रहा है…", "Saving…"), {
             val o = Api.call(this, "saveSite", body)
             Sites.reload(this)
             o.optString("siteId")
         }) { id ->
-            toast("Save हो गया")
+            toast(tr("Save हो गया", "Saved"))
             if (isNew) {
                 startActivity(Intent(this, SiteActivity::class.java).putExtra(SiteActivity.EXTRA_ID, id))
                 startActivity(Intent(this, MaterialsActivity::class.java).putExtra(SiteActivity.EXTRA_ID, id)

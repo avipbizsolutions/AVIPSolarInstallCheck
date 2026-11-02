@@ -138,12 +138,13 @@ class CameraActivity : AppCompatActivity() {
     }
 
     private val perms = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-        if (has(Manifest.permission.CAMERA)) startCamera() else { toast("Photo के लिए Camera की अनुमति चाहिए"); finishWithResult() }
-        if (hasLocation()) startLocation() else gpsLabel.text = "Location की अनुमति नहीं — photo पर GPS नहीं आएगा"
+        if (has(Manifest.permission.CAMERA)) startCamera() else { toast(tr("Photo के लिए Camera की अनुमति चाहिए", "Camera permission is needed for photos")); finishWithResult() }
+        if (hasLocation()) startLocation() else gpsLabel.text = tr("Location की अनुमति नहीं — photo पर GPS नहीं आएगा", "No location permission: the photo will have no GPS")
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Lang.load(this)
         dir = File(intent.getStringExtra(EXTRA_DIR) ?: run { finish(); return }).apply { mkdirs() }
         prefix = intent.getStringExtra(EXTRA_PREFIX) ?: "photo"
         multi = intent.getBooleanExtra(EXTRA_MULTI, false)
@@ -252,7 +253,7 @@ class CameraActivity : AppCompatActivity() {
                 }
                 addView(right, lp(dp(70), WRAP))
             }, lp().margins(context, t = 6))
-            addView(text("Photo सिर्फ इसी camera से · Gallery से upload बंद", 11.5f, 0xFFB8C4CF.toInt()) { gravity = Gravity.CENTER },
+            addView(text(tr("Photo सिर्फ इसी camera से · Gallery से upload बंद", "Photos from this camera only · no gallery uploads"), 11.5f, 0xFFB8C4CF.toInt()) { gravity = Gravity.CENTER },
                 lp().margins(context, t = 8))
         })
         setContentView(root)
@@ -289,7 +290,7 @@ class CameraActivity : AppCompatActivity() {
         if (busy) return
         hd = !hd
         getSharedPreferences(PREFS, MODE_PRIVATE).edit().putBoolean("hd", hd).apply()
-        toast(if (hd) "HD: पूरी quality" else "SD: छोटी photo, जल्दी upload")
+        toast(if (hd) tr("HD: पूरी quality", "HD: full quality") else tr("SD: छोटी photo, जल्दी upload", "SD: smaller photo, faster upload"))
         paintChips()
         bind()
     }
@@ -317,7 +318,7 @@ class CameraActivity : AppCompatActivity() {
     override fun onDestroy() { super.onDestroy(); if (::executor.isInitialized) executor.shutdown() }
 
     private fun finishWithResult() {
-        if (busy) { toast("Photo save हो रही है…"); return }
+        if (busy) { toast(tr("Photo save हो रही है…", "Saving photo…")); return }
         val data = Intent().putStringArrayListExtra(EXTRA_FILES, saved)
         current?.let { data.putExtra(EXTRA_LAT, it.latitude).putExtra(EXTRA_LNG, it.longitude) }
         setResult(if (saved.isEmpty()) Activity.RESULT_CANCELED else Activity.RESULT_OK, data)
@@ -356,7 +357,7 @@ class CameraActivity : AppCompatActivity() {
             camera?.cameraInfo?.zoomState?.observe(this) { onZoom(it) }
             keepZoom?.let { setZoom(it) }
         } catch (e: Exception) {
-            toast("Camera शुरू नहीं हुआ: ${e.message ?: ""}")
+            toast(tr("Camera शुरू नहीं हुआ: ${e.message ?: ""}", "Camera did not start: ${e.message ?: \"\"}"))
         }
     }
 
@@ -420,7 +421,7 @@ class CameraActivity : AppCompatActivity() {
         if (busy) return
         setBusy(true)
         val snap = Snapshot(current, place, Date(), heading.heading)
-        if (snap.loc == null) toast("GPS अभी नहीं मिला — photo पर location नहीं आएगी")
+        if (snap.loc == null) toast(tr("GPS अभी नहीं मिला — photo पर location नहीं आएगी", "No GPS yet: the photo will have no location"))
         cap.takePicture(executor, object : ImageCapture.OnImageCapturedCallback() {
             override fun onCaptureSuccess(image: ImageProxy) {
                 val rotation = image.imageInfo.rotationDegrees
@@ -428,7 +429,7 @@ class CameraActivity : AppCompatActivity() {
                 runOnUiThread { process(bmp, rotation, snap) }
             }
             override fun onError(exception: ImageCaptureException) {
-                runOnUiThread { setBusy(false); toast("Photo नहीं खिंची: ${exception.message ?: ""}") }
+                runOnUiThread { setBusy(false); toast(tr("Photo नहीं खिंची: ${exception.message ?: ""}", "Photo not taken: ${exception.message ?: \"\"}")) }
             }
         })
     }
@@ -455,9 +456,9 @@ class CameraActivity : AppCompatActivity() {
                 thumb.setImageBitmap(small)
                 paintChips()
                 if (!multi) { setBusy(false); finishWithResult(); return@launch }
-                toast("Photo save हो गई")
+                toast(tr("Photo save हो गई", "Photo saved"))
             } catch (e: Exception) {
-                toast("Save नहीं हुई: ${e.message ?: ""}")
+                toast(tr("Save नहीं हुई: ${e.message ?: ""}", "Not saved: ${e.message ?: \"\"}"))
             } finally {
                 setBusy(false)
             }
@@ -513,7 +514,7 @@ class CameraActivity : AppCompatActivity() {
     private fun startLocation() {
         val providers = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)
             .filter { runCatching { lm.isProviderEnabled(it) }.getOrDefault(false) }
-        if (providers.isEmpty()) { gpsLabel.text = "GPS बंद है"; return }
+        if (providers.isEmpty()) { gpsLabel.text = tr("GPS बंद है", "GPS is off"); return }
         for (p in providers) {
             try {
                 lm.getLastKnownLocation(p)?.let { onLocation(it) }

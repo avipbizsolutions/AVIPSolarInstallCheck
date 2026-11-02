@@ -32,20 +32,21 @@ class DispatchActivity : AppCompatActivity() {
         if (ps != null) {
             val make = lines.firstOrNull { it.item == ps.first }?.make ?: ""
             Uploads.serial(this, site.id, ps.first, make, ps.second, f)
-            toast("Serial ${ps.second} जोड़ा गया")
+            toast(tr("Serial ${ps.second} जोड़ा गया", "Serial ${ps.second} added"))
         } else {
             Uploads.photo(this, site.id, f, "Dispatch", "Loading",
                 lat = r.data?.getDoubleExtra(CameraActivity.EXTRA_LAT, 0.0)?.takeIf { it != 0.0 },
                 lng = r.data?.getDoubleExtra(CameraActivity.EXTRA_LNG, 0.0)?.takeIf { it != 0.0 })
-            toast("Loading photo जोड़ी गई")
+            toast(tr("Loading photo जोड़ी गई", "Loading photo added"))
         }
         renderSerials(); renderLoading()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Lang.load(this)
         site = Sites.byId(intent.getStringExtra(SiteActivity.EXTRA_ID)) ?: run { finish(); return }
-        if (!Ref.isLoaded) { toast("BOM list load नहीं हुई"); finish(); return }
+        if (!Ref.isLoaded) { toast(tr("BOM list load नहीं हुई", "BOM list did not load")); finish(); return }
         lines = Materials.lines(site, MaterialsActivity.MODE_DISPATCH)
 
         val done = pillButton("Dispatch Done", Ui.GREEN, Color.WHITE, heightDp = 54) { finishDispatch() }
@@ -54,22 +55,22 @@ class DispatchActivity : AppCompatActivity() {
         if (site.s("Sales Note").isNotBlank()) body.addView(note("Sales Note: " + site.s("Sales Note"), Ui.SUN_LIGHT, 0xFF4A3300.toInt()))
         if (site.s("Manager Note").isNotBlank()) body.addView(note("Manager: " + site.s("Manager Note")))
 
-        body.addView(section("Serial No. + Label Photo", "Panel, Inverter और Battery के हर piece का") {
+        body.addView(section("Serial No. + Label Photo", tr("Panel, Inverter और Battery के हर piece का", "For every panel, inverter and battery")) {
             serialBox = vertical { }
             addView(serialBox)
         })
 
         body.addView(text("Material Dispatch (BOM)", 16f, Ui.TEXT, bold = true), lp().margins(this, t = 4, b = 4))
-        body.addView(text("माँगी गई Qty पहले से भरी है। जो कम भेज रहे हैं वह कम करें, वह Balance में जाएगा।", 13.5f, Ui.MUTED), lp().margins(this, b = 10))
+        body.addView(text(tr("माँगी गई Qty पहले से भरी है। जो कम भेज रहे हैं वह कम करें, वह Balance में जाएगा।", "The requested quantity is filled in. Reduce anything you are sending less of; the rest becomes balance."), 13.5f, Ui.MUTED), lp().margins(this, b = 10))
         body.addView(MaterialEditor(this, lines, MaterialsActivity.MODE_DISPATCH).view())
 
-        body.addView(section("गाड़ी की जानकारी") {
+        body.addView(section(tr("गाड़ी की जानकारी", "Vehicle details")) {
             vehicle = field(this, "Vehicle No.", "", "BR 01 XX 0000", InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS) {}
-            driver = field(this, "Driver Mobile", "", "10 अंकों का number", InputType.TYPE_CLASS_PHONE) {}
+            driver = field(this, "Driver Mobile", "", tr("10 अंकों का number", "10-digit number"), InputType.TYPE_CLASS_PHONE) {}
             loadingNote = text("", 13.5f, Ui.MUTED)
             addView(loadingNote, lp().margins(context, t = 10))
-            addView(pillButton("गाड़ी में लोड Material की Photo", Color.WHITE, Ui.TEXT, iconRes = R.drawable.ic_camera) {
-                openCamera("गाड़ी में लोड Material", "loading")
+            addView(pillButton(tr("गाड़ी में लोड Material की Photo", "Photo of material loaded in the vehicle"), Color.WHITE, Ui.TEXT, iconRes = R.drawable.ic_camera) {
+                openCamera(tr("गाड़ी में लोड Material", "Material loaded in the vehicle"), "loading")
             }.apply { background = rounded(Color.WHITE, dpf(25f), 0xFFB9C5D0.toInt(), dp(1)) }, lp().margins(context, t = 8))
         })
         renderSerials()
@@ -101,7 +102,7 @@ class DispatchActivity : AppCompatActivity() {
         serialBox.removeAllViews()
         val items = serialItems()
         if (items.isEmpty()) {
-            serialBox.addView(text("इस site में Panel / Inverter / Battery नहीं हैं", 14f, Ui.MUTED))
+            serialBox.addView(text(tr("इस site में Panel / Inverter / Battery नहीं हैं", "This site has no panel, inverter or battery"), 14f, Ui.MUTED))
         }
         items.forEach { l ->
             val have = serialsFor(l.item)
@@ -123,34 +124,34 @@ class DispatchActivity : AppCompatActivity() {
                     if (pair.size == 1) addView(View(context), lp(0, 1, 1f))
                 }, lp().margins(this, b = 6))
             }
-            if (have.size < need) serialBox.addView(pillButton("+ ${l.item} Serial जोड़ें", Ui.BRAND, Color.WHITE, heightDp = 46, iconRes = R.drawable.ic_camera) {
+            if (have.size < need) serialBox.addView(pillButton(tr("+ ${l.item} Serial जोड़ें", "+ Add ${l.item} serial"), Ui.BRAND, Color.WHITE, heightDp = 46, iconRes = R.drawable.ic_camera) {
                 addSerial(l)
             }, lp().margins(this, b = 6))
         }
         val errs = Uploads.errors(this, site.id)
         if (errs.isNotEmpty()) serialBox.addView(note(errs.take(3).joinToString("\n"), Ui.DANGER_LIGHT, Ui.DANGER), lp().margins(this, t = 8))
-        serialBox.addView(text("गलत serial हटाने के लिए उस पर देर तक दबाएँ।", 12f, Ui.MUTED), lp().margins(this, t = 4))
+        serialBox.addView(text(tr("गलत serial हटाने के लिए उस पर देर तक दबाएँ।", "Long-press a wrong serial to remove it."), 12f, Ui.MUTED), lp().margins(this, t = 4))
     }
 
     private fun renderLoading() {
         val n = site.photos.count { it.optString("Photo Type") == "Loading" } +
             Uploads.pendingFor(this, site.id).count { it.optString("type") == "Loading" }
-        loadingNote.text = if (n == 0) "Loading photo अभी नहीं ली" else "✓ $n loading photo"
+        loadingNote.text = if (n == 0) tr("Loading photo अभी नहीं ली", "Loading photo not taken yet") else "✓ $n loading photo"
     }
 
     private fun addSerial(l: MatLine) {
-        askText("${l.item} Serial No.", "Label पर लिखा Serial No.") { sn ->
+        askText("${l.item} Serial No.", tr("Label पर लिखा Serial No.", "Serial no. on the label")) { sn ->
             val clean = sn.trim().uppercase()
             val all = lines.filter { it.serial }.flatMap { x -> serialsFor(x.item).map { it.first.uppercase() } }
-            if (clean in all) { toast("यह Serial पहले से जुड़ा है"); return@askText }
+            if (clean in all) { toast(tr("यह Serial पहले से जुड़ा है", "This serial is already added")); return@askText }
             pendingSerial = l.item to clean
             openCamera("Label photo: $clean", "serial_" + clean.replace(Regex("[^A-Za-z0-9]"), "_"))
         }
     }
 
     private fun removeSerial(sn: String) {
-        confirm("Serial हटाएँ?", "$sn को इस site से हटाना है?", "हटाएँ") {
-            busy("हटाया जा रहा है…", {
+        confirm(tr("Serial हटाएँ?", "Remove serial?"), tr("$sn को इस site से हटाना है?", "Remove $sn from this site?"), tr("हटाएँ", "Remove")) {
+            busy(tr("हटाया जा रहा है…", "Removing…"), {
                 Api.call(this, "serialDelete", JSONObject().put("siteId", site.id).put("serial", sn))
                 Sites.reload(this)
             }) {
@@ -171,23 +172,23 @@ class DispatchActivity : AppCompatActivity() {
     private fun finishDispatch() {
         val missing = serialItems().filter { serialsFor(it.item).size < it.qty.toInt() }
         if (missing.isNotEmpty()) {
-            showError(ApiException("इनके Serial No. बाकी हैं:\n" + missing.joinToString("\n") { "${it.item}: ${serialsFor(it.item).size} / ${it.qty.toInt()}" }))
+            showError(ApiException(tr("इनके Serial No. बाकी हैं:\n", "Serial numbers still needed for:\n") + missing.joinToString("\n") { "${it.item}: ${serialsFor(it.item).size} / ${it.qty.toInt()}" }))
             return
         }
         val v = vehicle.text.toString().trim()
-        if (v.isBlank()) { vehicle.error = "Vehicle No. भरें"; vehicle.requestFocus(); return }
+        if (v.isBlank()) { vehicle.error = tr("Vehicle No. भरें", "Enter the vehicle no."); vehicle.requestFocus(); return }
         val short = lines.filter { (it.reference ?: 0.0) > it.qty }
-        val msg = if (short.isEmpty()) "सारा material भेजा जा रहा है।"
-        else "कम भेजा (Balance में जाएगा):\n" + short.joinToString("\n") { "${it.item}: ${Fmt.qty((it.reference ?: 0.0) - it.qty)} ${it.unit}" }
+        val msg = if (short.isEmpty()) tr("सारा material भेजा जा रहा है।", "All material is being sent.")
+        else tr("कम भेजा (Balance में जाएगा):\n", "Sent short (goes to balance):\n") + short.joinToString("\n") { "${it.item}: ${Fmt.qty((it.reference ?: 0.0) - it.qty)} ${it.unit}" }
         confirm("Dispatch Done?", msg, "Dispatch Done") {
-            busy("Dispatch save हो रहा है…", {
+            busy(tr("Dispatch save हो रहा है…", "Saving dispatch…"), {
                 Api.call(this, "dispatch", JSONObject().put("siteId", site.id)
                     .put("materials", Materials.toJson(lines)).put("vehicle", v)
                     .put("driver", driver.text.toString().filter { c -> c.isDigit() }.takeLast(10)))
             }) { o ->
                 Uploads.flush(this)
                 busy("Refresh…", { Sites.reload(this) }) {
-                    toast(if (o.optBoolean("balancePending")) "Dispatch हुआ · Balance बाकी" else "Dispatch हो गया")
+                    toast(if (o.optBoolean("balancePending")) tr("Dispatch हुआ · Balance बाकी", "Dispatched · balance pending") else tr("Dispatch हो गया", "Dispatched"))
                     finish()
                 }
             }
