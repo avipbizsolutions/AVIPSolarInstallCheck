@@ -202,7 +202,7 @@ class InstallActivity : AppCompatActivity() {
                 o
             }) { o ->
                 site = Sites.byId(site.id) ?: site
-                toast(tr("✓ ${o.optString("itemType")} मिला", "✓ ${o.optString(\"itemType\")} matched"))
+                toast(tr("✓ ${o.optString("itemType")} मिला", "✓ ${o.optString("itemType")} matched"))
                 render()
             }
         }

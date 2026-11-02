@@ -211,7 +211,7 @@ class HomeActivity : AppCompatActivity() {
             addView(statusPill(s.status))
         })
         if (s.fromSalesApp && Status.step(s.status) == 0) {
-            addView(note(tr("AVIP Solar Sales से आया · Visit ${s.s("Sales Visit No.")}", "From AVIP Solar Sales · Visit ${s.s(\"Sales Visit No.\")}") +
+            addView(note(tr("AVIP Solar Sales से आया · Visit ${s.s("Sales Visit No.")}", "From AVIP Solar Sales · Visit ${s.s("Sales Visit No.")}") +
                 (if (s.s("Installation Date").isNotBlank()) " · Install ${Fmt.date(s.s("Installation Date"))}" else ""),
                 Ui.GREEN_LIGHT, 0xFF145E39.toInt()), lp().margins(context, t = 10))
         }

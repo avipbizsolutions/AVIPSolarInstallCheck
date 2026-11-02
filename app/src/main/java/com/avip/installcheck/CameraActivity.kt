@@ -357,7 +357,7 @@ class CameraActivity : AppCompatActivity() {
             camera?.cameraInfo?.zoomState?.observe(this) { onZoom(it) }
             keepZoom?.let { setZoom(it) }
         } catch (e: Exception) {
-            toast(tr("Camera शुरू नहीं हुआ: ${e.message ?: ""}", "Camera did not start: ${e.message ?: \"\"}"))
+            toast(tr("Camera शुरू नहीं हुआ: ${e.message ?: ""}", "Camera did not start: ${e.message ?: ""}"))
         }
     }
 
@@ -429,7 +429,7 @@ class CameraActivity : AppCompatActivity() {
                 runOnUiThread { process(bmp, rotation, snap) }
             }
             override fun onError(exception: ImageCaptureException) {
-                runOnUiThread { setBusy(false); toast(tr("Photo नहीं खिंची: ${exception.message ?: ""}", "Photo not taken: ${exception.message ?: \"\"}")) }
+                runOnUiThread { setBusy(false); toast(tr("Photo नहीं खिंची: ${exception.message ?: ""}", "Photo not taken: ${exception.message ?: ""}")) }
             }
         })
     }
@@ -458,7 +458,7 @@ class CameraActivity : AppCompatActivity() {
                 if (!multi) { setBusy(false); finishWithResult(); return@launch }
                 toast(tr("Photo save हो गई", "Photo saved"))
             } catch (e: Exception) {
-                toast(tr("Save नहीं हुई: ${e.message ?: ""}", "Not saved: ${e.message ?: \"\"}"))
+                toast(tr("Save नहीं हुई: ${e.message ?: ""}", "Not saved: ${e.message ?: ""}"))
             } finally {
                 setBusy(false)
             }

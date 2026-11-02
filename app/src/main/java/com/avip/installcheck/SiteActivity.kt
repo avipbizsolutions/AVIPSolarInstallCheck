@@ -54,7 +54,7 @@ class SiteActivity : AppCompatActivity() {
                 else -> ""
             }
             if (remark.isNotBlank()) addView(note(remark, Ui.DANGER_LIGHT, Ui.DANGER), lp().margins(context, t = 10))
-            if (s.fromSalesApp) addView(note(tr("AVIP Solar Sales से आया · Visit ${s.s("Sales Visit No.")}", "From AVIP Solar Sales · Visit ${s.s(\"Sales Visit No.\")}") +
+            if (s.fromSalesApp) addView(note(tr("AVIP Solar Sales से आया · Visit ${s.s("Sales Visit No.")}", "From AVIP Solar Sales · Visit ${s.s("Sales Visit No.")}") +
                 (if (s.s("Quoted System").isNotBlank()) "\nQuoted: ${s.s("Quoted System")}" else ""),
                 Ui.GREEN_LIGHT, 0xFF145E39.toInt()), lp().margins(context, t = 10))
         }, lp().margins(this, b = 12))
@@ -137,7 +137,7 @@ class SiteActivity : AppCompatActivity() {
                         Ui.DANGER_LIGHT, Ui.DANGER), lp().margins(context, t = 8))
                 }
                 s.pending.filter { it.optString("Status") == "Open" }.forEach { p ->
-                    addView(note(tr("बाकी: ${p.optString("Pending Item")}", "Pending: ${p.optString(\"Pending Item\")}") +
+                    addView(note(tr("बाकी: ${p.optString("Pending Item")}", "Pending: ${p.optString("Pending Item")}") +
                         (if (p.optString("Reason").isNotBlank()) " · ${p.optString("Reason")}" else "") +
                         (if (p.optString("Expected Date").isNotBlank()) " · ${Fmt.date(p.optString("Expected Date"))}" else ""),
                         Ui.SUN_LIGHT, 0xFF4A3300.toInt()), lp().margins(context, t = 8))

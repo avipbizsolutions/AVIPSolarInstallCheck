@@ -83,7 +83,7 @@ class LoginActivity : AppCompatActivity() {
 
     private fun showSetPin() {
         val user = Session.user(this)
-        val f = frame(tr("अपना नया PIN बनाएँ", "Set your own PIN"), tr("नमस्ते, ${user?.name ?: ""} · ${Team.label(user?.team ?: "")}", "Hello, ${user?.name ?: \"\"} · ${Team.label(user?.team ?: \"\")}"))
+        val f = frame(tr("अपना नया PIN बनाएँ", "Set your own PIN"), tr("नमस्ते, ${user?.name ?: ""} · ${Team.label(user?.team ?: "")}", "Hello, ${user?.name ?: ""} · ${Team.label(user?.team ?: "")}"))
         f.addView(text(tr("पहली बार Login पर Office वाला PIN बदलना ज़रूरी है।", "At first login, replace the office PIN with your own."), 15f, Ui.TEXT))
         val numPass = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
         val pin1 = field(f, tr("नया 4 अंकों का PIN", "New 4-digit PIN"), "", "••••", numPass, R.drawable.ic_sign, 4) {}
