@@ -91,7 +91,7 @@ class VerifyActivity : AppCompatActivity() {
     }
 
     private fun dateBox(initial: String, onPick: (String) -> Unit): TextView = text(if (initial.isBlank()) tr("तारीख चुनें", "Choose date") else Fmt.date(initial), 16f, Ui.TEXT) {
-        background = rounded(Color.WHITE, dpf(12f), 0xFFB9C5D0.toInt(), dp(1))
+        background = rounded(Color.WHITE, dpf(12f), 0xFFB7C6D8.toInt(), dp(1))
         setPadding(dp(14), dp(12), dp(14), dp(12))
         var cur = initial
         setOnClickListener {

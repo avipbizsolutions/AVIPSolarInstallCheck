@@ -133,7 +133,7 @@ class MaterialEditor(private val a: Activity, private val lines: List<MatLine>, 
         }
         set(l.qty)
         addView(a.horizontal {
-            background = rounded(Color.WHITE, a.dpf(10f), 0xFFB9C5D0.toInt(), a.dp(1))
+            background = rounded(Color.WHITE, a.dpf(10f), 0xFFB7C6D8.toInt(), a.dp(1))
             addView(a.text("−", 20f, Ui.TEXT) {
                 gravity = Gravity.CENTER
                 setOnClickListener { set(l.qty - 1) }

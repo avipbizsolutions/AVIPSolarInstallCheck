@@ -159,7 +159,7 @@ fun android.content.Context.okNa(current: String, onPick: (String) -> Unit): Vie
     fun paint() = views.forEachIndexed { i, tv ->
         val on = opts[i] == cur
         val color = when (opts[i]) { "OK" -> Ui.GREEN; "Not OK" -> Ui.DANGER; else -> Ui.MUTED }
-        tv.background = if (on) rounded(color, dpf(10f)) else rounded(Color.WHITE, dpf(10f), 0xFFB9C5D0.toInt(), dp(1))
+        tv.background = if (on) rounded(color, dpf(10f)) else rounded(Color.WHITE, dpf(10f), 0xFFB7C6D8.toInt(), dp(1))
         tv.setTextColor(if (on) Color.WHITE else Ui.TEXT)
     }
     opts.forEach { o ->

@@ -81,7 +81,7 @@ class SiteFormActivity : AppCompatActivity() {
                 if (hasLocation()) takeLocation() else perm.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
             }, lp().margins(context, t = 10))
             addView(pillButton(tr("Google Map Link Paste करें", "Paste Google Map link"), android.graphics.Color.WHITE, Ui.TEXT) { pasteLink() }.apply {
-                background = rounded(android.graphics.Color.WHITE, dpf(25f), 0xFFB9C5D0.toInt(), dp(1))
+                background = rounded(android.graphics.Color.WHITE, dpf(25f), 0xFFB7C6D8.toInt(), dp(1))
             }, lp().margins(context, t = 8))
             if (values["Latitude"]!!.isNotBlank()) addView(text(tr("Map में देखें ›", "View on map ›"), 14f, Ui.BRAND, bold = true) {
                 setPadding(0, dp(10), 0, 0)
@@ -100,7 +100,7 @@ class SiteFormActivity : AppCompatActivity() {
             fieldTo(this, "Site Survey by", "Survey By", "")
             addView(text("Survey Date", 13f, Ui.MUTED, bold = true), lp().margins(context, t = 12, b = 6))
             val dateView = text(Fmt.date(values["Survey Date"] ?: ""), 16f, Ui.TEXT) {
-                background = rounded(android.graphics.Color.WHITE, dpf(12f), 0xFFB9C5D0.toInt(), dp(1))
+                background = rounded(android.graphics.Color.WHITE, dpf(12f), 0xFFB7C6D8.toInt(), dp(1))
                 setPadding(dp(14), dp(12), dp(14), dp(12))
             }
             dateView.setOnClickListener { pickDate(values["Survey Date"] ?: "") { d -> values["Survey Date"] = d; dateView.text = Fmt.date(d) } }

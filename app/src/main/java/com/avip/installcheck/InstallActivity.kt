@@ -123,7 +123,7 @@ class InstallActivity : AppCompatActivity() {
         body = screen(site.customer, "Installation · Round ${site.round}", bottom = vertical {
             addView(horizontal {
                 addView(pillButton("Save", Color.WHITE, Ui.TEXT, heightDp = 54) { saveProgress(false) }.apply {
-                    background = rounded(Color.WHITE, dpf(27f), 0xFFB9C5D0.toInt(), dp(1))
+                    background = rounded(Color.WHITE, dpf(27f), 0xFFB7C6D8.toInt(), dp(1))
                 }, lp(dp(100), WRAP).margins(context, r = 8))
                 addView(submit, lp(0, WRAP, 1f))
             })
@@ -222,7 +222,7 @@ class InstallActivity : AppCompatActivity() {
             addView(text(if (n > 0) "📷$n" else "📷", 15f, Ui.TEXT, bold = true) {
                 gravity = Gravity.CENTER
                 minHeight = dp(46)
-                background = rounded(if (n > 0) Ui.GREEN_LIGHT else Color.WHITE, dpf(10f), 0xFFB9C5D0.toInt(), dp(1))
+                background = rounded(if (n > 0) Ui.GREEN_LIGHT else Color.WHITE, dpf(10f), 0xFFB7C6D8.toInt(), dp(1))
                 contentDescription = "Photo"
                 setOnClickListener { takePhoto(item) }
             }, lp(dp(56), WRAP))
@@ -250,7 +250,7 @@ class InstallActivity : AppCompatActivity() {
                     addView(vertical {
                         addView(android.widget.FrameLayout(context).apply {
                             background = if (local != null || uploaded) rounded(0xFF2E4A63.toInt(), dpf(12f))
-                            else rounded(Color.WHITE, dpf(12f), 0xFF8A99A8.toInt(), dp(2))
+                            else rounded(Color.WHITE, dpf(12f), 0xFF8797AA.toInt(), dp(2))
                             clipToOutline = true
                             if (local != null) {
                                 addView(ImageView(context).apply {
@@ -295,7 +295,7 @@ class InstallActivity : AppCompatActivity() {
                 })
             }
             addView(pillButton(tr("+ बाकी काम जोड़ें", "+ Add pending work"), Color.WHITE, Ui.TEXT, heightDp = 44) { addPending() }.apply {
-                background = rounded(Color.WHITE, dpf(22f), 0xFF8A99A8.toInt(), dp(1))
+                background = rounded(Color.WHITE, dpf(22f), 0xFF8797AA.toInt(), dp(1))
             }, lp().margins(context, t = 6))
             if (open.isNotEmpty()) addView(text(tr("काम पूरा होने पर उस पर देर तक दबाएँ।", "Long-press an item when the work is done."), 12f, Ui.MUTED), lp().margins(context, t = 6))
         })
@@ -306,7 +306,7 @@ class InstallActivity : AppCompatActivity() {
         val reason = input(tr("कारण, जैसे DISCOM से", "Reason, e.g. waiting for DISCOM"))
         var date = ""
         val dateView = text(tr("कब तक? (तारीख चुनें)", "By when? (choose a date)"), 15f, Ui.TEXT) {
-            background = rounded(Color.WHITE, dpf(12f), 0xFFB9C5D0.toInt(), dp(1))
+            background = rounded(Color.WHITE, dpf(12f), 0xFFB7C6D8.toInt(), dp(1))
             setPadding(dp(14), dp(12), dp(14), dp(12))
         }
         dateView.setOnClickListener { pickDate(Fmt.isoDay(System.currentTimeMillis())) { d -> date = d; dateView.text = Fmt.date(d) } }
@@ -355,7 +355,7 @@ class InstallActivity : AppCompatActivity() {
     private fun signRow(label: String, file: File, name: String): View = vertical {
         addView(text(label, 13.5f, Ui.MUTED, bold = true))
         addView(android.widget.FrameLayout(context).apply {
-            background = rounded(Color.WHITE, dpf(12f), if (file.exists()) Ui.LINE else 0xFF8A99A8.toInt(), dp(if (file.exists()) 1 else 2))
+            background = rounded(Color.WHITE, dpf(12f), if (file.exists()) Ui.LINE else 0xFF8797AA.toInt(), dp(if (file.exists()) 1 else 2))
             clipToOutline = true
             if (file.exists()) addView(ImageView(context).apply {
                 scaleType = ImageView.ScaleType.FIT_CENTER

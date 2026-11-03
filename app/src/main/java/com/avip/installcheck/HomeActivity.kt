@@ -76,7 +76,7 @@ class HomeActivity : AppCompatActivity() {
             addView(horizontal {
                 addView(badge(R.drawable.ic_sun, Ui.SUN, 40, square = true))
                 addView(vertical {
-                    addView(text("AVIP Solar", 12.5f, 0xFFC9D6E2.toInt()))
+                    addView(text("AVIP Solar", 12.5f, 0xFFD6E4F7.toInt()))
                     addView(text("Installation", 18f, Color.WHITE, bold = true))
                 }, lp(0, WRAP, 1f).margins(context, l = 10))
                 addView(pill(Team.label(user.team), Team.color(user.team), Color.WHITE))
@@ -84,7 +84,7 @@ class HomeActivity : AppCompatActivity() {
                 addView(barButton(R.drawable.ic_logout) { logout() })
             })
             addView(horizontal {
-                addView(text(tr("नमस्ते, ${user.name}", "Hello, ${user.name}"), 15f, 0xFFC9D6E2.toInt()), lp(0, WRAP, 1f))
+                addView(text(tr("नमस्ते, ${user.name}", "Hello, ${user.name}"), 15f, 0xFFD6E4F7.toInt()), lp(0, WRAP, 1f))
                 addView(langToggle(), lp(WRAP, WRAP))
             }, lp().margins(context, t = 10))
             addView(text(when (user.team) {
@@ -151,7 +151,7 @@ class HomeActivity : AppCompatActivity() {
         background = rounded(0xFF1D3A52.toInt(), dpf(10f))
         setPadding(dp(4), dp(8), dp(4), dp(8))
         addView(text(value.toString(), 20f, if (highlight && value > 0) Ui.SUN else Color.WHITE, bold = true) { gravity = Gravity.CENTER })
-        addView(text(label, 11.5f, 0xFFC9D6E2.toInt()) { gravity = Gravity.CENTER; maxLines = 1 })
+        addView(text(label, 11.5f, 0xFFD6E4F7.toInt()) { gravity = Gravity.CENTER; maxLines = 1 })
     }
 
     private fun renderStats() {

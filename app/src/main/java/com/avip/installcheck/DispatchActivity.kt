@@ -71,7 +71,7 @@ class DispatchActivity : AppCompatActivity() {
             addView(loadingNote, lp().margins(context, t = 10))
             addView(pillButton(tr("गाड़ी में लोड Material की Photo", "Photo of material loaded in the vehicle"), Color.WHITE, Ui.TEXT, iconRes = R.drawable.ic_camera) {
                 openCamera(tr("गाड़ी में लोड Material", "Material loaded in the vehicle"), "loading")
-            }.apply { background = rounded(Color.WHITE, dpf(25f), 0xFFB9C5D0.toInt(), dp(1)) }, lp().margins(context, t = 8))
+            }.apply { background = rounded(Color.WHITE, dpf(25f), 0xFFB7C6D8.toInt(), dp(1)) }, lp().margins(context, t = 8))
         })
         renderSerials()
         renderLoading()
